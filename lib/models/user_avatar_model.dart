@@ -9,5 +9,4 @@ class UserAvatar with ChangeNotifier {
     _avatarPath = value;
     notifyListeners();
   }
-
 }

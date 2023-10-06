@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-
 import '../bill_created_notification.dart';
 import '../models/user_model.dart';
-
+import 'add_page.dart';
+import 'bill_page.dart';
+import '../constants/palette.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback goToBillPage;
@@ -15,52 +16,49 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _hasNewBill = false;
   String _currentUserName = 'Loading...';
   String _billInfo = 'Loading...';
 
-  // bool? displayedIsViewed;
+  bool _isInit = true;
 
   @override
-  void initState() {
-    super.initState();
-    _checkUserStatus();
+  void didChangeDependencies() {
+    if (_isInit) {
+      _isInit = false;
+      final userModel = Provider.of<UserModel>(context, listen: false);
+      userModel.fetchUser();
+      _checkUserStatus();
+    }
+    super.didChangeDependencies();
   }
 
-  /**
-   * 检测firestorage是否有新的bill
-   */
   Future<void> _checkUserStatus() async {
     final userModel = Provider.of<UserModel>(context, listen: false);
     await userModel.fetchUser();
     setState(() {
       _currentUserName = userModel.userName;
     });
-    // 获取所有 bills 的文档
+
     QuerySnapshot billsSnapshot = await _firestore.collection('bills').get();
-    bool hasNewBill = false; // 初始值为 false
+    bool hasNewBill = false;
 
     for (DocumentSnapshot billDoc in billsSnapshot.docs) {
       Map<String, dynamic> data = billDoc.data() as Map<String, dynamic>;
       var peopleStatusList = data['peopleStatus'] as List;
 
-      // 查找当前用户名对应的 isViewed 是否为 false
       for (var status in peopleStatusList) {
         if (status['name'] == _currentUserName && status['isViewed'] == false) {
           setState(() {
             _hasNewBill = true;
-          });
-          // hasNewBill = true;
-          setState(() {
             _billInfo = 'You have a new bill!';
           });
-          return; // 找到后直接退出方法
+          return;
         }
       }
     }
-    // 如果遍历了所有文档都没有找到新账单，那么更新状态
+
     if (!_hasNewBill) {
       setState(() {
         _billInfo = 'No new bill found.';
@@ -68,18 +66,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /**
-   * 点击View btn后跳转对应至页面并且更新firestorage中的isViewed属性
-   */
   void handleViewBill() async {
-    // 获取所有 bills 的文档
     QuerySnapshot billsSnapshot = await FirebaseFirestore.instance.collection('bills').get();
 
     for (DocumentSnapshot billDoc in billsSnapshot.docs) {
       Map<String, dynamic> data = billDoc.data() as Map<String, dynamic>;
       var peopleStatusList = data['peopleStatus'] as List;
 
-      // 查找当前用户名对应的项并更新 isViewed
       bool updated = false;
       for (var status in peopleStatusList) {
         if (status['name'] == _currentUserName && status['isViewed'] == false) {
@@ -88,7 +81,6 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
-      // 如果进行了更新，将更新的数据写回到 Firestore
       if (updated) {
         await billDoc.reference.update({
           'peopleStatus': peopleStatusList,
@@ -96,42 +88,200 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // 更新页面状态
     setState(() {
       _hasNewBill = false;
-      _billInfo = 'No new bill found.'; // 或其他您希望显示的内容
+      _billInfo = 'No new bill found.';
     });
 
-    widget.goToBillPage();
+    Navigator.push(context, MaterialPageRoute(builder: (context) => BillPage()));
   }
 
   @override
   Widget build(BuildContext context) {
+    UserModel userModel = Provider.of<UserModel>(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text('HomePage')),
+      backgroundColor: Palette.backgroundColor,
+      appBar: AppBar(
+        title: Text('Hello, ${userModel.userName}', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 1.0,
+        actions: [
+          if (_hasNewBill)
+            IconButton(
+              icon: Icon(Icons.notifications_active, color: Colors.red),
+              onPressed: handleViewBill,
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.notifications_none, color: Colors.grey),
+              onPressed: () {}, // Do nothing or show no new notifications
+            ),
+        ],
+      ),
       body: NotificationListener<BillCreatedNotification>(
         onNotification: (notification) {
           _checkUserStatus();
-          return true; // true 表示我们已经处理了这个 notification。
+          return true;
         },
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text("Username: $_currentUserName"),
-              SizedBox(height: 20),
-              Text("$_billInfo"),
-              SizedBox(height: 20),
-              // 如果有新的账单，则显示按钮
-              if (_hasNewBill)
-                ElevatedButton(
-                  onPressed: handleViewBill,  // 使用新创建的方法
-                  child: Text("View New Bill", style: TextStyle(fontSize: 18)),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.25,
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  margin: const EdgeInsets.symmetric(vertical: 20.0),
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: Palette.primaryColor,
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Need to split？",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 40),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Palette.primaryColor,
+                          padding: EdgeInsets.symmetric(
+                              vertical: 20.0, horizontal: 30.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => AddPage()),
+                          );
+                        },
+                        child: Text(
+                          "Create new bill",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+            ),
 
+            // Bills Display Title
+            Padding(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Recent bills",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => BillPage()));
+                    },
+                    child: Text("See all",
+                        style: TextStyle(
+                            color: Palette.primaryColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
 
-            ],
-          ),
+            // Bills Display
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('bills').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text("Something went wrong!"));
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  final bills = snapshot.data?.docs ?? [];
+                  return ListView.builder(
+                    itemCount: bills.length,
+                    itemBuilder: (context, index) {
+                      final bill = bills[index];
+                      final billName = bill['billName'] ?? "No name";
+                      final billPrice = bill['billPrice'] ?? "0.0";
+
+                      // Timestamp processing
+                      final Timestamp timestamp = bill['billDate'];
+                      final DateTime billDate = timestamp.toDate();
+                      final formattedDate =
+                          "${billDate.year}-${billDate.month}-${billDate.day}";
+
+                      final peopleNumber = bill['peopleNumber'] ?? "Unknown Count";
+
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        margin: EdgeInsets.symmetric(
+                            vertical: 10.0, horizontal: 20.0),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 5.0, horizontal: 20.0),
+                          leading: Container(
+                            width: 40.0,
+                            height: 40.0,
+                            decoration: BoxDecoration(
+                              color: Palette.primaryColor,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Icon(Icons.receipt, color: Colors.white),
+                          ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(billName,
+                                  style: TextStyle(
+                                      color: Colors.black, fontSize: 16,fontWeight: FontWeight.bold)),
+                              Text("\$ $billPrice",
+                                  style: TextStyle(
+                                      color: Colors.black, fontSize: 16,fontWeight: FontWeight.bold))
+                            ],
+                          ),
+                          subtitle: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(formattedDate,
+                                  style: TextStyle(
+                                      color: Palette.secondaryColor,
+                                      fontWeight: FontWeight.bold)),
+                              Text("$peopleNumber people",
+                                  style: TextStyle(
+                                      color: Palette.secondaryColor,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
