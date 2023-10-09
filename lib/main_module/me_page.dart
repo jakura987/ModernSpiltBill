@@ -19,12 +19,11 @@ class MePage extends StatelessWidget {
     // 从 UserModel 获取 email
     final email = userModel.userEmail;
 
-    var box = Hive.isBoxOpen('settings') ? Hive.box('settings') : await Hive.openBox('settings');
+    var box = Hive.isBoxOpen('settings')
+        ? Hive.box('settings')
+        : await Hive.openBox('settings');
     return box.get(email, defaultValue: 'assets/images/image1.jpg');
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -71,74 +70,70 @@ class MePage extends StatelessWidget {
     );
   }
 
-
-
-
-
   Widget _buildProfileSection(BuildContext context) {
     final userProfile = Provider.of<UserAvatar>(context);
     final userModel = Provider.of<UserModel>(context);
-    return Container(
-      color: Colors.white, // 设置外部容器的颜色
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: <Widget>[
-            FutureBuilder<String?>(
-              future: getUserAvatarFromHive(context),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                }
-                return CircleAvatar(
-                  radius: 30,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => ProfileEditPage()));
+      },
+      child: Container(
+        color: Colors.white, // 设置外部容器的颜色
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: <Widget>[
+              FutureBuilder<String?>(
+                future: getUserAvatarFromHive(context),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
+                  return CircleAvatar(
+                    radius: 30,
                     // assets/images/image1.jpg
-                  // backgroundImage: AssetImage(snapshot.data ?? '../assets/images/image1.jpg'), // 默认图片作为备用
-                  backgroundImage: AssetImage(userProfile.avatarPath),
-                );
-              },
-            ),
-            SizedBox(width: 20),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(userModel.userName ?? 'Username', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    Text(userModel.userEmail ?? 'user@email.com', style: TextStyle(fontSize: 15)),
-                  ],
+                    // backgroundImage: AssetImage(snapshot.data ?? '../assets/images/image1.jpg'), // 默认图片作为备用
+                    backgroundImage: AssetImage(userProfile.avatarPath),
+                  );
+                },
+              ),
+              SizedBox(width: 20),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(userModel.userName ?? 'Username',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      Text(userModel.userEmail ?? 'user@email.com',
+                          style: TextStyle(fontSize: 15)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileEditPage()));
-              },
-              child: Icon(Icons.arrow_forward_ios, color: Colors.grey),
-            )
-          ],
+              Icon(Icons.arrow_forward_ios, color: Colors.grey),
+            ],
+          ),
         ),
       ),
     );
   }
 
-
-
-
-
-
-
-
-
-
   List<Widget> _buildFunctionList(BuildContext context) {
-    final functions = ['Notifications', 'Rate us', 'Contact us', 'Settings'];
+    final functions = [
+      'Notifications',
+      'My friends',
+      'Rate us',
+      'Contact us',
+      'Settings'
+    ];
     return functions.map((f) => _buildFunctionItem(context, f)).toList();
   }
-
 
   Widget _buildFunctionItem(BuildContext context, String name) {
     return GestureDetector(
@@ -154,9 +149,8 @@ class MePage extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-              bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)
-          ),
+          border:
+              Border(bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)),
         ),
         padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
         child: Row(
@@ -170,7 +164,6 @@ class MePage extends StatelessWidget {
     );
   }
 
-
   Widget _buildLogoutSection(BuildContext context) {
     return Column(
       children: [
@@ -178,10 +171,7 @@ class MePage extends StatelessWidget {
           onTap: () async {
             await _auth.signOut();
             Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => LoginPage())
-            );
+                context, MaterialPageRoute(builder: (context) => LoginPage()));
           },
           child: Text(
             'Log out',
@@ -203,5 +193,4 @@ class MePage extends StatelessWidget {
       ],
     );
   }
-
 }

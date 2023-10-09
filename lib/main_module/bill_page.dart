@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
+import '../constants/palette.dart';
 
 class Bill {
-  final String documentId;  // <-- Add this
+  final String documentId; // <-- Add this
   final String name;
   final double price;
   final DateTime dateTime;
@@ -14,7 +15,7 @@ class Bill {
   final List<PersonStatus> peopleStatus;
 
   Bill({
-    required this.documentId,  // <-- Add this
+    required this.documentId, // <-- Add this
     required this.name,
     required this.price,
     required this.dateTime,
@@ -38,7 +39,8 @@ class PersonStatus {
   PersonStatus({required this.name, required this.status});
 }
 
-class _ShowBillState extends State<BillPage>  with SingleTickerProviderStateMixin {
+class _ShowBillState extends State<BillPage>
+    with SingleTickerProviderStateMixin {
 
   TabController? _tabController;
 
@@ -70,7 +72,8 @@ class _ShowBillState extends State<BillPage>  with SingleTickerProviderStateMixi
 
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CollectionReference bills = FirebaseFirestore.instance.collection('bills');
+  final CollectionReference bills = FirebaseFirestore.instance.collection(
+      'bills');
 
   List<PersonStatus> parsePersonStatus(List<dynamic> peopleStatusList) {
     return peopleStatusList.map((personStatusMap) {
@@ -87,9 +90,13 @@ class _ShowBillState extends State<BillPage>  with SingleTickerProviderStateMixi
     UserModel userModel = Provider.of<UserModel>(context);
 
     return Scaffold(
+      backgroundColor: Palette.backgroundColor,
       appBar: AppBar(
-        title: Text('Show Bills'),
-        bottom: TabBar(  // Add this TabBar
+        title: Text('Bills', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 1.0,
+        bottom: TabBar( // Add this TabBar
           controller: _tabController,
           tabs: [
             Tab(text: "All Bills"),
@@ -98,47 +105,48 @@ class _ShowBillState extends State<BillPage>  with SingleTickerProviderStateMixi
           ],
         ),
       ),
-      body: TabBarView(  // And this TabBarView
+      body: TabBarView( // And this TabBarView
         controller: _tabController,
         children: [
-          _buildBillList(userModel, null),  // All bills
-          _buildBillList(userModel, true),  // Finished bills
-          _buildBillList(userModel, false),  // Unfinished bills
+          _buildBillList(userModel, null), // All bills
+          _buildBillList(userModel, true), // Finished bills
+          _buildBillList(userModel, false), // Unfinished bills
         ],
       ),
     );
 
-      // body: StreamBuilder<QuerySnapshot>(
-      //   stream: _firestore.collection('bills').where('peopleName', arrayContains: userModel.userName).snapshots(),
-      //   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-      //     if (snapshot.hasError) {
-      //       return Center(child: Text('Something went wrong'));
-      //     }
-      //
-      //     if (snapshot.connectionState == ConnectionState.waiting) {
-      //       return Center(child: CircularProgressIndicator());
-      //     }
-      //
-      //     return ListView(
-      //       children: snapshot.data!.docs.map((DocumentSnapshot document) {
-      //         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-      //         return BillBox(
-      //           bill: Bill(
-      //             documentId: document.id,  // <-- Add this
-      //             name: data['billName'] ?? "Unknown",
-      //             price: data['billPrice']?.toDouble() ?? 0.0,
-      //             dateTime: (data['billDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      //             numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
-      //             billDescription: data['billDescription'] ?? "Description not provided",
-      //             AAPP: data['AAPP']?.toDouble() ?? 0.0,
-      //             peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(data['peopleStatus']) : [],
-      //           ),
-      //         );
-      //       }).toList(),
-      //     );
-      //   },
-      // ),
+    // body: StreamBuilder<QuerySnapshot>(
+    //   stream: _firestore.collection('bills').where('peopleName', arrayContains: userModel.userName).snapshots(),
+    //   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+    //     if (snapshot.hasError) {
+    //       return Center(child: Text('Something went wrong'));
+    //     }
+    //
+    //     if (snapshot.connectionState == ConnectionState.waiting) {
+    //       return Center(child: CircularProgressIndicator());
+    //     }
+    //
+    //     return ListView(
+    //       children: snapshot.data!.docs.map((DocumentSnapshot document) {
+    //         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+    //         return BillBox(
+    //           bill: Bill(
+    //             documentId: document.id,  // <-- Add this
+    //             name: data['billName'] ?? "Unknown",
+    //             price: data['billPrice']?.toDouble() ?? 0.0,
+    //             dateTime: (data['billDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    //             numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
+    //             billDescription: data['billDescription'] ?? "Description not provided",
+    //             AAPP: data['AAPP']?.toDouble() ?? 0.0,
+    //             peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(data['peopleStatus']) : [],
+    //           ),
+    //         );
+    //       }).toList(),
+    //     );
+    //   },
+    // ),
   }
+
   Widget _buildBillList(UserModel userModel, bool? isFinished) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore.collection('bills').where(
@@ -153,22 +161,30 @@ class _ShowBillState extends State<BillPage>  with SingleTickerProviderStateMixi
           return Center(child: CircularProgressIndicator());
         }
 
-        List<BillBox> bills = snapshot.data!.docs.map((DocumentSnapshot document) {
+        List<BillBox> bills = snapshot.data!.docs.map((
+            DocumentSnapshot document) {
           Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-          List<PersonStatus> personStatuses = parsePersonStatus(data['peopleStatus'] ?? []);
-          if (isFinished == null || personStatuses.any((status) => status.name == userModel.userName && status.status == isFinished)) {
+          List<PersonStatus> personStatuses = parsePersonStatus(
+              data['peopleStatus'] ?? []);
+          if (isFinished == null ||
+              personStatuses.any((status) => status.name ==
+                  userModel.userName && status.status == isFinished)) {
             return BillBox(
-                          bill: Bill(
-                            documentId: document.id,  // <-- Add this
-                            name: data['billName'] ?? "Unknown",
-                            price: data['billPrice']?.toDouble() ?? 0.0,
-                            dateTime: (data['billDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-                            numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
-                            billDescription: data['billDescription'] ?? "Description not provided",
-                            AAPP: data['AAPP']?.toDouble() ?? 0.0,
-                            peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(data['peopleStatus']) : [],
-                          ),
-                        );
+              bill: Bill(
+                documentId: document.id,
+                // <-- Add this
+                name: data['billName'] ?? "Unknown",
+                price: data['billPrice']?.toDouble() ?? 0.0,
+                dateTime: (data['billDate'] as Timestamp?)?.toDate() ??
+                    DateTime.now(),
+                numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
+                billDescription: data['billDescription'] ??
+                    "Description not provided",
+                AAPP: data['AAPP']?.toDouble() ?? 0.0,
+                peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(
+                    data['peopleStatus']) : [],
+              ),
+            );
           } else {
             return null;
           }
@@ -188,166 +204,146 @@ class BillBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-      child: InkWell(
-        onTap: () => _showBillDetails(context, bill),
-        child: Container(
-          height: 80,
+// Extract bill properties for easier reference
+    String billName = bill.name;
+    String billPrice = bill.price.toStringAsFixed(2);
+    String formattedDate = '${bill.dateTime.toLocal()}'.split(' ')[0];
+    int peopleNumber = bill.numberOfPeople;
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      margin: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+        leading: Container(
+          width: 40.0,
+          height: 40.0,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: Offset(0, 3),
+            color: Palette.primaryColor, // Ensure you have this color defined
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Icon(Icons.receipt, color: Colors.white),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(billName,
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            Text("\$ $billPrice",
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+        subtitle: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(formattedDate,
+                style: TextStyle(
+                    color: Palette.secondaryColor,
+                    // Ensure you have this color defined
+                    fontWeight: FontWeight.bold)),
+            Text("$peopleNumber people",
+                style: TextStyle(
+                    color: Palette.secondaryColor,
+                    // Ensure you have this color defined
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+        onTap: () => _showBillDetails(context,
+            bill), // Added the onTap method from the previous InkWell
+      ),
+    );
+}
+
+_showBillDetails(BuildContext context, Bill bill) {
+  UserModel userModel = Provider.of<UserModel>(
+      context, listen: false); // 获取当前用户
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Bill Details'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text('Bill Name: ${bill.name}', style: TextStyle(fontSize: 20)),
+              Text('Total Bill Amount: \$${bill.price.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 20)),
+              Text('Description: ${bill.billDescription}',
+                  style: TextStyle(fontSize: 20)),
+              Text('Average Amount Per Person: \$${bill.AAPP.toStringAsFixed(
+                  2)}', style: TextStyle(fontSize: 20)),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 10.0),
+              //   child: Text('People Status', style: TextStyle(fontWeight: FontWeight.bold)),
+              // ),
+              ExpansionTile(
+                title: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: Text(
+                      'People Status', style: TextStyle(fontSize: 20)),
+                ),
+                children: bill.peopleStatus.map((personStatus) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    // 为每个状态添加少量的底部间距
+                    child: Text('${personStatus.name}: ${personStatus.status
+                        ? "done"
+                        : "undone"}', style: TextStyle(fontSize: 20)),
+                  );
+                }).toList(),
               ),
             ],
           ),
-          child: Row(
-            children: [
-              // ClipRRect(
-              //   borderRadius: BorderRadius.circular(8.0),
-              //   child: Image.asset(bill.image, width: 80, height: 80, fit: BoxFit.cover),
-              // ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      // 使用这个属性使子元素右对齐
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.label, color: Colors.blue),
-                            SizedBox(width: 4),
-                            Text(bill.name, style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        Text('\$${bill.price.toStringAsFixed(2)}',
-                            style: TextStyle(fontSize: 20, color: Colors
-                                .green)),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      // 使用这个属性使子元素右对齐
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.date_range, color: Colors.orange),
-                            SizedBox(width: 4),
-                            Text('${bill.dateTime.toLocal()}'.split(' ')[0],
-                                style: TextStyle(fontSize: 20)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.people, color: Colors.purple),
-                            SizedBox(width: 4),
-                            Text('${bill.numberOfPeople} people',
-                                style: TextStyle(fontSize: 20)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
         ),
-      ),
-    );
-  }
-
-  _showBillDetails(BuildContext context, Bill bill) {
-    UserModel userModel = Provider.of<UserModel>(
-        context, listen: false); // 获取当前用户
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Bill Details'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Bill Name: ${bill.name}', style: TextStyle(fontSize: 20)),
-                Text('Total Bill Amount: \$${bill.price.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 20)),
-                Text('Description: ${bill.billDescription}',
-                    style: TextStyle(fontSize: 20)),
-                Text('Average Amount Per Person: \$${bill.AAPP.toStringAsFixed(
-                    2)}', style: TextStyle(fontSize: 20)),
-                // Padding(
-                //   padding: const EdgeInsets.symmetric(vertical: 10.0),
-                //   child: Text('People Status', style: TextStyle(fontWeight: FontWeight.bold)),
-                // ),
-                ExpansionTile(
-                  title: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Text(
-                        'People Status', style: TextStyle(fontSize: 20)),
-                  ),
-                  children: bill.peopleStatus.map((personStatus) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
-                      // 为每个状态添加少量的底部间距
-                      child: Text('${personStatus.name}: ${personStatus.status
-                          ? "done"
-                          : "undone"}', style: TextStyle(fontSize: 20)),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Settled'),
-              onPressed: () async {
-                // 获取当前用户
-                UserModel userModel = Provider.of<UserModel>(context, listen: false);
+          TextButton(
+            child: Text('Settled'),
+            onPressed: () async {
+              // 获取当前用户
+              UserModel userModel = Provider.of<UserModel>(
+                  context, listen: false);
 
-                // 更新Firestore中的数据
-                DocumentReference billRef = FirebaseFirestore.instance.collection('bills').doc(bill.documentId);  // Use bill.documentId here
-                List<PersonStatus> updatedStatus = [];
+              // 更新Firestore中的数据
+              DocumentReference billRef = FirebaseFirestore.instance.collection(
+                  'bills').doc(bill.documentId); // Use bill.documentId here
+              List<PersonStatus> updatedStatus = [];
 
-                for (PersonStatus status in bill.peopleStatus) {
-                  if (status.name == userModel.userName) {
-                    updatedStatus.add(PersonStatus(name: status.name, status: true));
-                  } else {
-                    updatedStatus.add(status);
-                  }
+              for (PersonStatus status in bill.peopleStatus) {
+                if (status.name == userModel.userName) {
+                  updatedStatus.add(
+                      PersonStatus(name: status.name, status: true));
+                } else {
+                  updatedStatus.add(status);
                 }
+              }
 
-                await billRef.update({
-                  'peopleStatus': updatedStatus.map((status) => {
-                    'name': status.name,
-                    'status': status.status
-                  }).toList()
-                });
-
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
+              await billRef.update({
+                'peopleStatus': updatedStatus.map((status) =>
+                {
+                  'name': status.name,
+                  'status': status.status
+                }).toList()
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}}
