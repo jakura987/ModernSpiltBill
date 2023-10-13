@@ -5,7 +5,7 @@ import 'main_module/bill_page.dart';
 import 'main_module/group_page.dart';
 import 'main_module/home_page.dart';
 import 'main_module/me_page.dart';
-import 'main_module/add_page.dart';
+import 'main_module/choose_group.dart';
 import 'constants/palette.dart';
 
 
@@ -20,7 +20,7 @@ class _NavigatePageState extends State<NavigatePage> {
   List<Widget> get _pages => [
     HomePage(goToBillPage: goToBillPage),
     GroupPage(),
-    AddPage(),
+    ChooseGroup(),
     BillPage(),
     MePage(),
     SettingsPage()
@@ -41,11 +41,9 @@ class _NavigatePageState extends State<NavigatePage> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [BoxShadow(color: Colors.black12, spreadRadius: 0, blurRadius: 1)],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           child: BottomNavigationBar(
             elevation: 0,
             backgroundColor: Colors.white,
@@ -60,11 +58,11 @@ class _NavigatePageState extends State<NavigatePage> {
               ),
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10.0),
+                  padding: EdgeInsets.symmetric(vertical: 1.0),
                   child: CircleAvatar(
-                    radius: 20,
+                    radius: 25,
                     backgroundColor: Palette.primaryColor,
-                    child: Icon(Icons.add, color: Colors.white, size: 30),
+                    child: Icon(Icons.add, color: Colors.white, size: 40),
                   ),
                 ),
                 label: '',

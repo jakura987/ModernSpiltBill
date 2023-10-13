@@ -3,27 +3,13 @@ import 'package:spiltbill/main_module/profile_edit_page.dart';
 import 'package:spiltbill/main_module/settings_page.dart';
 import '../constants/palette.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../login_page.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import '../login_page.dart';
 import '../models/user_avatar_model.dart';
 import '../models/user_model.dart';
 
 class MePage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Future<String?> getUserAvatarFromHive(BuildContext context) async {
-    // 通过 Provider 获取 UserModel 的实例
-    final userModel = Provider.of<UserModel>(context, listen: false);
-
-    // 从 UserModel 获取 email
-    final email = userModel.userEmail;
-
-    var box = Hive.isBoxOpen('settings')
-        ? Hive.box('settings')
-        : await Hive.openBox('settings');
-    return box.get(email, defaultValue: 'assets/images/image1.jpg');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,19 +70,9 @@ class MePage extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: <Widget>[
-              FutureBuilder<String?>(
-                future: getUserAvatarFromHive(context),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  }
-                  return CircleAvatar(
-                    radius: 30,
-                    // assets/images/image1.jpg
-                    // backgroundImage: AssetImage(snapshot.data ?? '../assets/images/image1.jpg'), // 默认图片作为备用
-                    backgroundImage: AssetImage(userProfile.avatarPath),
-                  );
-                },
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: AssetImage(userProfile.avatarPath),
               ),
               SizedBox(width: 20),
               Expanded(
@@ -127,7 +103,6 @@ class MePage extends StatelessWidget {
   List<Widget> _buildFunctionList(BuildContext context) {
     final functions = [
       'Notifications',
-      'My friends',
       'Rate us',
       'Contact us',
       'Settings'
@@ -150,7 +125,7 @@ class MePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           border:
-              Border(bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)),
+          Border(bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)),
         ),
         padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
         child: Row(
@@ -178,6 +153,7 @@ class MePage extends StatelessWidget {
             style: TextStyle(
               color: Palette.primaryColor,
               fontSize: 16.0,
+                fontWeight: FontWeight.bold
             ),
           ),
         ),

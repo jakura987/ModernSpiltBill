@@ -9,8 +9,9 @@ import '../auth_service.dart';
 import 'welcome_page.dart';
 
 //TODO 将颜色背景之类的写成常量放一个文件
-const kPrimaryColor = Color(0xff65B8A6);
+const kPrimaryColor = Color(0xFF3BBBA4);
 const kSecondaryColor = Color(0xffDBDBDB);
+const kDontHaveAccountColor = Color(0xffBABEBD);
 final kFillColor = Colors.grey[200];
 const kAppName = 'SplitBill';
 const kUsernameHint = 'Username';
@@ -122,55 +123,63 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SingleChildScrollView( // 使用SingleChildScrollView来允许滚动
+      child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // 居中对齐
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container( //第一个容器(登录注册)
+            Container(
               width: 300,
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppName(),
                   SizedBox(height: 16),
+                  AppName(),
+                  SizedBox(height: 32),
                   CustomTextField(controller: _usernameController, hint: kUsernameHint),
                   SizedBox(height: 16),
                   CustomTextField(controller: _passwordController, hint: kPasswordHint, isObscured: true),
                   SizedBox(height: 16),
                   LoginButton(onPressed: _login, text: kLoginButtonText),
-                  RegisterButton(onPressed: _navigateToRegisterPage, text: kRegisterButtonText),
-
+                  SizedBox(height: 16),
+                  Text("Forget password?", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
-            DashedLine(width: 300),
-        Container( //TODO 第二个容器,目前只显示了hello world, 换成下面那个google第三方登录图标
-          width: 300,
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-        child: Text("在这边实现第三方登录(图标在assets包里),我是笨比我不会"),
-      ),
-
-            // Container( //第二个容器
-            //   width: 300,
-            //   padding: EdgeInsets.all(16),
-            //   decoration: BoxDecoration(
-            //     color: Colors.white,
-            //     borderRadius: BorderRadius.circular(8),
-            //   ),
-            //   child: IconButton(
-            //     icon: Image.asset('assets/images/btn_google.png'), // 请替换为您Google图标的路径
-            //     onPressed: _googleSignIn,
-            //   ),
-            // )
+            DashedLine(width: 280),
+            Container(
+              width: 300,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    "You can also login with",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor),
+                  ),
+                  SizedBox(height: 16),
+                  Image.asset('assets/images/btn_google.png', width: 30, height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Don't have an account?", style: TextStyle(color: kDontHaveAccountColor, fontWeight: FontWeight.bold)),
+                      TextButton(
+                        onPressed: _navigateToRegisterPage,
+                        child: Text("Sign up", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -187,6 +196,7 @@ class AppName extends StatelessWidget {
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
+        color: kPrimaryColor,
       ),
     );
   }
@@ -207,17 +217,24 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         hintText: hint,
+        hintStyle: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[400],
+        ),
         filled: true,
         fillColor: kFillColor,
+        contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),  // 调整了垂直边距为5.0
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
       ),
       obscureText: isObscured,
+      style: TextStyle(fontWeight: FontWeight.bold),
     );
   }
 }
+
 
 // LoginButton is a custom ElevatedButton
 class LoginButton extends StatelessWidget {
@@ -228,9 +245,13 @@ class LoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      child: Text(text),
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        child: Text(text, style: TextStyle(fontWeight: FontWeight.bold)), // Made text bold
+        style: ElevatedButton.styleFrom(primary: kPrimaryColor), // Setting the button color
+      ),
     );
   }
 }

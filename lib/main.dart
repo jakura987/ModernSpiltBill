@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
-import 'package:spiltbill/main_module/add_page.dart';
+import 'package:spiltbill/main_module/choose_group.dart';
 import 'package:spiltbill/main_module/bill_page.dart';
 import 'package:spiltbill/models/user_avatar_model.dart';
 import 'package:spiltbill/models/user_model.dart';

@@ -2,13 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'dashed_line.dart';
 import 'login_page.dart';
 
 //TODO 将名字之类的写成常量放一个文件
+const kPrimaryColor = Color(0xFF3BBBA4);
+const kSecondaryColor = Color(0xffDBDBDB);
+const kDontHaveAccountColor = Color(0xffBABEBD);
+final kFillColor = Colors.grey[200];
+const kAppName = 'SplitBill';
 const kPreferredName = 'PreferredName';
 const kEmailHint = 'Email';
 const kConfirmPasswordHint = 'Confirm Password';
-const kSignUpButtonText = 'SignUp';
+const kSignUpButtonText = 'Sign up';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -52,18 +58,19 @@ class _RegisterFormState extends State<RegisterForm> {
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    SizedBox(height: 16),
                     Text(
                       kAppName,
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kPrimaryColor),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 32),
                     CustomTextFormField(
                       controller: _preferredNameController,
                       hint: kPreferredName,
@@ -108,29 +115,49 @@ class _RegisterFormState extends State<RegisterForm> {
                       },
                     ),
                     SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _register,
-                      child: Text(kSignUpButtonText),
+                    Container(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _register,
+                        child: Text(kSignUpButtonText, style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(primary: kPrimaryColor),
+                      ),
                     ),
+                    SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 20),
-            Container( // 新增的第二个Container
+            DashedLine(width: 280),
+            Container(
+              width: 300,
               padding: EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
                 children: [
-                  Text('Already have an account? '),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
-                      );
-                    },
-                    child: Text('Login'),
+                  Text(
+                    "You can also login with",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor),
+                  ),
+                  SizedBox(height: 16),
+                  Image.asset('assets/images/btn_google.png', width: 30, height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Already have an account?", style: TextStyle(color: kDontHaveAccountColor, fontWeight: FontWeight.bold)),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => LoginPage()),
+                          );
+                        },
+                        child: Text('Login', style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -140,6 +167,7 @@ class _RegisterFormState extends State<RegisterForm> {
       ),
     );
   }
+
 
   Future<bool> isNameUnique(String name) async {
     final users = await FirebaseFirestore.instance.collection('users')
@@ -175,6 +203,7 @@ class _RegisterFormState extends State<RegisterForm> {
             'dailyLimit': 20,  // 默认的日限额
             'weeklyLimit': 200, // 默认的周限额
             'monthlyLimit': 2000, // 默认的月限额
+            'head': 1, //默认的头像
           });
 
           Navigator.pushReplacement(
@@ -222,8 +251,10 @@ class CustomTextFormField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         hintText: hint,
+        hintStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[400]),
+        contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: kFillColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
@@ -231,6 +262,7 @@ class CustomTextFormField extends StatelessWidget {
       ),
       obscureText: isObscured,
       validator: validator,
+      style: TextStyle(fontWeight: FontWeight.bold),
     );
   }
 }

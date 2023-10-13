@@ -114,7 +114,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ...selectedUsers.map((user) => ListTile(
               leading: CircleAvatar(
-                backgroundImage: AssetImage('path_to_default_avatar_image'),  // You can replace this with your default avatar image path
+                backgroundColor: Palette.primaryColor,
+                child: Text(
+                  user[0].toUpperCase(), // This will display the first letter of the user's name
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               title: Text(user),
               subtitle: user == Provider.of<UserModel>(context).userName ? Text('You must be a member of this group.') : null,

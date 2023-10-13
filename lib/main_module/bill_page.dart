@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../constants/palette.dart';
+import 'Bill_Detail_Page.dart';
 
 class Bill {
   final String documentId; // <-- Add this
@@ -92,6 +93,7 @@ class _ShowBillState extends State<BillPage>
     return Scaffold(
       backgroundColor: Palette.backgroundColor,
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.black),
         title: Text('Bills', style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         centerTitle: true,
@@ -256,94 +258,14 @@ class BillBox extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
           ],
         ),
-        onTap: () => _showBillDetails(context,
-            bill), // Added the onTap method from the previous InkWell
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => BillDetailPage(bill: bill),
+          ));
+        },
+
       ),
     );
 }
 
-_showBillDetails(BuildContext context, Bill bill) {
-  UserModel userModel = Provider.of<UserModel>(
-      context, listen: false); // 获取当前用户
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Bill Details'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              Text('Bill Name: ${bill.name}', style: TextStyle(fontSize: 20)),
-              Text('Total Bill Amount: \$${bill.price.toStringAsFixed(2)}',
-                  style: TextStyle(fontSize: 20)),
-              Text('Description: ${bill.billDescription}',
-                  style: TextStyle(fontSize: 20)),
-              Text('Average Amount Per Person: \$${bill.AAPP.toStringAsFixed(
-                  2)}', style: TextStyle(fontSize: 20)),
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(vertical: 10.0),
-              //   child: Text('People Status', style: TextStyle(fontWeight: FontWeight.bold)),
-              // ),
-              ExpansionTile(
-                title: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: Text(
-                      'People Status', style: TextStyle(fontSize: 20)),
-                ),
-                children: bill.peopleStatus.map((personStatus) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4.0),
-                    // 为每个状态添加少量的底部间距
-                    child: Text('${personStatus.name}: ${personStatus.status
-                        ? "done"
-                        : "undone"}', style: TextStyle(fontSize: 20)),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Close'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: Text('Settled'),
-            onPressed: () async {
-              // 获取当前用户
-              UserModel userModel = Provider.of<UserModel>(
-                  context, listen: false);
-
-              // 更新Firestore中的数据
-              DocumentReference billRef = FirebaseFirestore.instance.collection(
-                  'bills').doc(bill.documentId); // Use bill.documentId here
-              List<PersonStatus> updatedStatus = [];
-
-              for (PersonStatus status in bill.peopleStatus) {
-                if (status.name == userModel.userName) {
-                  updatedStatus.add(
-                      PersonStatus(name: status.name, status: true));
-                } else {
-                  updatedStatus.add(status);
-                }
-              }
-
-              await billRef.update({
-                'peopleStatus': updatedStatus.map((status) =>
-                {
-                  'name': status.name,
-                  'status': status.status
-                }).toList()
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}}
+}

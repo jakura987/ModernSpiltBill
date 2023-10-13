@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:spiltbill/main_module/add_page.dart';
+import 'package:spiltbill/main_module/choose_group.dart';
 import 'package:spiltbill/navigate_page.dart';
-
+import '../constants/palette.dart';
 import '../bill_created_notification.dart';
 import 'home_page.dart';
 
@@ -211,14 +211,36 @@ class _CreateBillState extends State<CreateBill> {
 
   Future<void> fetchPeopleNames() async {
     for (String groupName in widget.selectedGroups) {
-      final group = await _firestore.collection('groups').doc(groupName).get();
-      final List<String> peopleNames = List<String>.from(group['peopleName']);
-      uniquePeopleNamesSet.addAll(peopleNames);  // 使用 addAll 方法将所有人名添加到 Set 中
+      // 使用 where 方法根据 groupName 字段查询
+      final QuerySnapshot groupQuery = await _firestore.collection('groups').where('groupName', isEqualTo: groupName).get();
+
+      // 检查查询结果是否包含任何文档
+      if (groupQuery.docs.isEmpty) {
+        print('No document found for group $groupName');
+        continue;
+      }
+
+      // 获取第一个文档（因为 groupName 应该是唯一的，所以只会有一个匹配的文档）
+      final DocumentSnapshot group = groupQuery.docs.first;
+
+      final Map<String, dynamic>? groupData = group.data() as Map<String, dynamic>?;
+
+      if (groupData != null && groupData.containsKey('peopleName')) {
+        final List<String> peopleNames = List<String>.from(groupData['peopleName']);
+        uniquePeopleNamesSet.addAll(peopleNames);
+      } else {
+        print('The document $groupName exists but does not have a peopleName field or data is null.');
+      }
     }
+
     setState(() {
-      allPeopleNames = uniquePeopleNamesSet.toList();  // 将 Set 转换为 List
+      allPeopleNames = uniquePeopleNamesSet.toList();
     });
   }
+
+
+
+
 
 
   Future<void> fetchPeopleNamesFromSelectedGroups() async {
@@ -234,220 +256,315 @@ class _CreateBillState extends State<CreateBill> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      backgroundColor: Palette.primaryColor,
       appBar: AppBar(
+        backgroundColor: Palette.primaryColor,
         title: Text("Create your bill"),
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context); // 返回到 ChooseGroup 页面
           },
         ),
+        elevation: 0.0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
-            // Bill Information
-            Card(
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Palette.primaryColor, Palette.primaryColor],
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Bill Information",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                child: Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Bill Information
+                      billInformationSection(),
 
-                    // Bill Name
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Bill Name  *", style: TextStyle(fontSize: 20)),
-                          TextField(
-                            decoration: InputDecoration(
-                              hintText: "Enter bill name",
-                            ),
-                            onChanged: (value) {
-                              _billName = value;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                      SizedBox(height: 20),
 
-                    // Date
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Date  *", style: TextStyle(fontSize: 20)),
-                          ElevatedButton(
-                            onPressed: () async {
-                              DateTime? chosenDate = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2101),
-                              );
-                              if (chosenDate != null && chosenDate != _selectedDate) {
-                                setState(() {
-                                  _selectedDate = chosenDate;
-                                });
-                              }
-                            },
-                            child: Text(_selectedDate == null
-                                ? "Select Date"
-                                : "${_selectedDate!.toLocal()}".split(' ')[0]),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Bill Price
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Bill Price  *", style: TextStyle(fontSize: 20)),
-                          TextField(
-                            keyboardType: TextInputType.number, // Only allow numbers
-                            decoration: InputDecoration(
-                              hintText: "Enter bill price",
-                            ),
-                            onChanged: (value) {
-                              _billPrice = double.tryParse(value);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Description
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Description", style: TextStyle(fontSize: 20)),
-                          TextField(
-                            decoration: InputDecoration(
-                              hintText: "Enter bill description",
-                            ),
-                            onChanged: (value) {
-                              _billDescription = value;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  ],
+                      // Shared to
+                      sharedToSection(),
+                    ],
+                  ),
                 ),
               ),
             ),
-
-
             SizedBox(height: 20),
 
-
-            // Shared to
-            Card(
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Palette.primaryColor, Palette.primaryColor],
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      "Shared to  *",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 12),
-                    Container(
-                      height: 200.0,
-                      child: SingleChildScrollView(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: allPeopleNames.length,
-                          itemBuilder: (context, index) {
-                            return CheckboxListTile(
-                              title: Text(allPeopleNames[index], style: TextStyle(fontSize: 24)),
-                              value: _selectedPeople.contains(allPeopleNames[index]),
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  if (value == true) {
-                                    _selectedPeople.add(allPeopleNames[index]);
-                                  } else {
-                                    _selectedPeople.remove(allPeopleNames[index]);
-                                  }
-                                });
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+                    // Bill Summary
+                    billSummarySection(),
                   ],
                 ),
               ),
-            ),
-
-
-            SizedBox(height: 20),
-
-            // Bill Summary
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Bill Summary",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.left,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      _summaryText,
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    if (_summaryText.isNotEmpty) // Only show the "Submit bill" button if _summaryText is not empty
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: ElevatedButton(
-                            onPressed: _submitBill,
-                            child: Text("Submit bill", style: TextStyle(fontSize: 28)),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-
-
-            SizedBox(height: 20),
-
-            // Split Bill Button
-            ElevatedButton(
-              onPressed: _splitBill,
-              child: Text("Split bill", style: TextStyle(fontSize: 28)),
             ),
           ],
         ),
       ),
     );
   }
+
+
+  Widget billInformationSection() {
+    return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                "Bill Information",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+
+            // Bill Name
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    Text("Bill Name  *", style: TextStyle(fontSize: 16)),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "Enter bill name",
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      _billName = value;
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Date
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Date  *", style: TextStyle(fontSize: 16)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Palette.primaryColor, // 指定按钮背景颜色
+                    ),
+                    onPressed: () async {
+                      DateTime? chosenDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (chosenDate != null && chosenDate != _selectedDate) {
+                        setState(() {
+                          _selectedDate = chosenDate;
+                        });
+                      }
+                    },
+                    child: Text(_selectedDate == null
+                        ? "Select Date"
+                        : "${_selectedDate!.toLocal()}".split(' ')[0]),
+                  ),
+                ],
+              ),
+            ),
+
+            // Bill Price
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Bill Price  *", style: TextStyle(fontSize: 16)),
+                  TextField(
+                    keyboardType: TextInputType.number, // Only allow numbers
+                    decoration: InputDecoration(
+                      hintText: "Enter bill price",
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      _billPrice = double.tryParse(value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Description
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Description", style: TextStyle(fontSize: 16)),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "Enter bill description",
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      _billDescription = value;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  }
+
+  Widget sharedToSection() {
+    return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Shared to  *",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 12),
+            Container(
+              height: 200.0,
+              child: SingleChildScrollView(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: allPeopleNames.length,
+                  itemBuilder: (context, index) {
+                    return CheckboxListTile(
+                      title: Text(allPeopleNames[index], style: TextStyle(fontSize: 16)),
+                      value: _selectedPeople.contains(allPeopleNames[index]),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _selectedPeople.add(allPeopleNames[index]);
+                          } else {
+                            _selectedPeople.remove(allPeopleNames[index]);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+  }
+
+  Widget billSummarySection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                "Bill Summary",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 12),
+            if (_summaryText.isNotEmpty) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Bill Name: $_billName", style: TextStyle(fontSize: 16)),
+                  Text("Bill Price: \$${_billPrice?.toStringAsFixed(2) ?? '0'}", style: TextStyle(fontSize: 16)),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Date: ${_selectedDate?.toLocal().toString().split(' ')[0]}", style: TextStyle(fontSize: 16)),
+                  Text("People Number: ${_selectedPeople.length}", style: TextStyle(fontSize: 16)),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text("Description: $_billDescription", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _selectedPeople.map((person) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(person, style: TextStyle(fontSize: 16)),
+                      Text('\$${(_billPrice! / _selectedPeople.length).toStringAsFixed(2)}', style: TextStyle(fontSize: 16)),
+                    ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 16.0),
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Palette.primaryColor, // Set the button color
+                  ),
+                  onPressed: _submitBill,
+                  child: Text(_summaryText.isEmpty ? "Split bill" : "Submit bill", style: TextStyle(fontSize: 20)),
+                ),
+              ),
+
+            ] else ...[
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Palette.primaryColor, // Set the button color
+                  ),
+                  onPressed: _splitBill,
+                  child: Text("Split bill", style: TextStyle(fontSize: 20)),
+                ),
+              ),
+
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+
+
 }
+
+

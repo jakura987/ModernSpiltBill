@@ -11,12 +11,14 @@ class UserModel extends ChangeNotifier {
   double? _dailyLimit;
   double? _weeklyLimit;
   double? _monthlyLimit;
+  int? _head;
 
   String get userName => _userName ?? '';
   String get userEmail => _userEmail ?? '';
   double? get dailyLimit => _dailyLimit;
   double? get weeklyLimit => _weeklyLimit;
   double? get monthlyLimit => _monthlyLimit;
+  int? get head => _head;
 
   Future<void> fetchUser() async {
     final user = _auth.currentUser;
@@ -32,6 +34,7 @@ class UserModel extends ChangeNotifier {
 
     _userName = userDoc.docs.first['name'];
     _userEmail = userDoc.docs.first['email'];
+    _head = userDoc.docs.first['head'];  // 从 Firestore 文档中提取 head 的值
     _dailyLimit = userDoc.docs.first['dailyLimit'] != null
         ? (userDoc.docs.first['dailyLimit'] as num).toDouble()
         : null;

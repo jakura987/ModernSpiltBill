@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../bill_created_notification.dart';
 import '../models/user_model.dart';
-import 'add_page.dart';
+import 'choose_group.dart';
 import 'bill_page.dart';
 import '../constants/palette.dart';
 
@@ -145,16 +145,16 @@ class _HomePageState extends State<HomePage> {
                         "Need to split？",
                         style: TextStyle(
                             color: Colors.white,
-                            fontSize: 28,
+                            fontSize: 25,
                             fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Palette.primaryColor,
                           padding: const EdgeInsets.symmetric(
-                              vertical: 20.0, horizontal: 30.0),
+                              vertical: 15.0, horizontal: 20.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
                           ),
@@ -162,13 +162,13 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => AddPage()),
+                            MaterialPageRoute(builder: (context) => ChooseGroup()),
                           );
                         },
                         child: Text(
                           "Create new bill",
                           style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -206,7 +206,11 @@ class _HomePageState extends State<HomePage> {
             // Bills Display
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('bills').snapshots(),
+                // Only get bills that include the current user's name
+                stream: FirebaseFirestore.instance
+                    .collection('bills')
+                    .where('peopleName', arrayContains: userModel.userName)
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(child: Text("Something went wrong!"));
