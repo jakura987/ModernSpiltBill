@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:spiltbill/main_module/choose_group.dart';
@@ -6,7 +8,10 @@ import '../constants/palette.dart';
 import '../bill_created_notification.dart';
 import '../dashed_line.dart';
 import 'home_page.dart';
-
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class CreateBill extends StatefulWidget {
   final List<String> selectedGroups;
@@ -38,22 +43,35 @@ class PersonStatus {
   }
 }
 
-
-
 class _CreateBillState extends State<CreateBill> {
-
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<String> _selectedPeople = [];
   List<String> allPeopleNames = [];
   Set<String> uniquePeopleNamesSet = Set<String>();
-
-
   DateTime? _selectedDate;
   String? _billDescription;
   String _billName = '';
   double? _billPrice;
   String _summaryText = '';
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery); // Choose from gallery. For camera, use `ImageSource.camera`
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
 
 
   Future<void> _checkDailyLimit() async {
@@ -62,16 +80,23 @@ class _CreateBillState extends State<CreateBill> {
 
     for (var person in _selectedPeople) {
       double peopleSpend = currentBillAAPP;
-      QuerySnapshot billsSnapshot = await _firestore.collection('bills').where('billDate', isEqualTo: _selectedDate).get();
+      QuerySnapshot billsSnapshot = await _firestore
+          .collection('bills')
+          .where('billDate', isEqualTo: _selectedDate)
+          .get();
       for (var bill in billsSnapshot.docs) {
         var billData = bill.data() as Map<String, dynamic>;
-        if (billData['peopleName'] is List && (billData['peopleName'] as List).contains(person)) {
+        if (billData['peopleName'] is List &&
+            (billData['peopleName'] as List).contains(person)) {
           peopleSpend += billData['AAPP']?.toDouble() ?? 0.0;
         }
       }
 
       // New code for fetching user data based on name
-      QuerySnapshot userQuery = await _firestore.collection('users').where('name', isEqualTo: person).get();
+      QuerySnapshot userQuery = await _firestore
+          .collection('users')
+          .where('name', isEqualTo: person)
+          .get();
       Map<String, dynamic>? userData;
       if (userQuery.docs.isNotEmpty) {
         userData = userQuery.docs.first.data() as Map<String, dynamic>;
@@ -87,15 +112,17 @@ class _CreateBillState extends State<CreateBill> {
       }
     }
 
-
     if (exceededUsers.isNotEmpty) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Warning'),
           content: Column(
-            mainAxisSize: MainAxisSize.min, // This makes the column only as tall as its children.
-            children: exceededUsers.map((user) => Text('$user have exceeded daily limit.')).toList(),
+            mainAxisSize: MainAxisSize.min,
+            // This makes the column only as tall as its children.
+            children: exceededUsers
+                .map((user) => Text('$user have exceeded daily limit.'))
+                .toList(),
           ),
           actions: <Widget>[
             TextButton(
@@ -104,25 +131,34 @@ class _CreateBillState extends State<CreateBill> {
                 Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => NavigatePage()),
-                        (route) => false
-                );
+                    (route) => false);
               },
             ),
           ],
         ),
       );
     }
-
   }
-
-
 
   Future<void> _submitBill() async {
     await _checkDailyLimit();
+    String? imageUrl;
+    if (_selectedImage != null) {
+      imageUrl = await _uploadImageToFirebase(_selectedImage!);
+      if (imageUrl == null) {
+        final snackBar = SnackBar(content: Text('Error uploading the image. Please try again.'));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        return;
+      }
+    }
+
     try {
       // Prepare the data
-      List<PersonStatus> peopleStatus = _selectedPeople.map((personName) => PersonStatus(name: personName)).toList();
-      List<Map<String, dynamic>> peopleStatusMapList = peopleStatus.map((e) => e.toMap()).toList();
+      List<PersonStatus> peopleStatus = _selectedPeople
+          .map((personName) => PersonStatus(name: personName))
+          .toList();
+      List<Map<String, dynamic>> peopleStatusMapList =
+      peopleStatus.map((e) => e.toMap()).toList();
 
       Map<String, dynamic> billData = {
         'billName': _billName,
@@ -133,10 +169,14 @@ class _CreateBillState extends State<CreateBill> {
         'AAPP': _billPrice! / _selectedPeople.length,
         'peopleName': _selectedPeople,
         'peopleStatus': peopleStatusMapList,
+        if (imageUrl != null) 'imageUrl': imageUrl,
       };
+
+      print("Preparing to submit the following data to Firestore: $billData");
 
       // Submit the data to Firestore
       await _firestore.collection('bills').add(billData);
+      print("Data submitted successfully!");
 
       // Show snackbar upon successful submission
       final snackBar = SnackBar(content: Text('Submit success'));
@@ -151,19 +191,21 @@ class _CreateBillState extends State<CreateBill> {
         MaterialPageRoute(builder: (context) => NavigatePage()),
             (route) => false, // remove all routes
       );
-
     } catch (e) {
       print('Error submitting bill: $e');
-      final snackBar = SnackBar(content: Text('Error submitting bill. Please try again.'));
+      final snackBar =
+      SnackBar(content: Text('Error submitting bill. Please try again.'));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
 
-
   _splitBill() {
     // Check if all the necessary data is provided
-    if (_billName.isEmpty || _selectedDate == null || _billPrice == null || _selectedPeople.isEmpty) {
+    if (_billName.isEmpty ||
+        _selectedDate == null ||
+        _billPrice == null ||
+        _selectedPeople.isEmpty) {
       showDialog(
         context: context,
         builder: (context) {
@@ -174,7 +216,6 @@ class _CreateBillState extends State<CreateBill> {
               TextButton(
                 child: Text('OK'),
                 onPressed: () {
-
                   Navigator.of(context).pop();
                 },
               ),
@@ -200,7 +241,6 @@ class _CreateBillState extends State<CreateBill> {
     });
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -213,7 +253,10 @@ class _CreateBillState extends State<CreateBill> {
   Future<void> fetchPeopleNames() async {
     for (String groupName in widget.selectedGroups) {
       // 使用 where 方法根据 groupName 字段查询
-      final QuerySnapshot groupQuery = await _firestore.collection('groups').where('groupName', isEqualTo: groupName).get();
+      final QuerySnapshot groupQuery = await _firestore
+          .collection('groups')
+          .where('groupName', isEqualTo: groupName)
+          .get();
 
       // 检查查询结果是否包含任何文档
       if (groupQuery.docs.isEmpty) {
@@ -224,13 +267,16 @@ class _CreateBillState extends State<CreateBill> {
       // 获取第一个文档（因为 groupName 应该是唯一的，所以只会有一个匹配的文档）
       final DocumentSnapshot group = groupQuery.docs.first;
 
-      final Map<String, dynamic>? groupData = group.data() as Map<String, dynamic>?;
+      final Map<String, dynamic>? groupData =
+          group.data() as Map<String, dynamic>?;
 
       if (groupData != null && groupData.containsKey('peopleName')) {
-        final List<String> peopleNames = List<String>.from(groupData['peopleName']);
+        final List<String> peopleNames =
+            List<String>.from(groupData['peopleName']);
         uniquePeopleNamesSet.addAll(peopleNames);
       } else {
-        print('The document $groupName exists but does not have a peopleName field or data is null.');
+        print(
+            'The document $groupName exists but does not have a peopleName field or data is null.');
       }
     }
 
@@ -239,20 +285,54 @@ class _CreateBillState extends State<CreateBill> {
     });
   }
 
-
-
-
-
-
   Future<void> fetchPeopleNamesFromSelectedGroups() async {
     for (String groupName in widget.selectedGroups) {
       final group = await _firestore.collection('groups').doc(groupName).get();
       final List<String> peopleNames = List<String>.from(group['peopleName']);
       allPeopleNames.addAll(peopleNames);
     }
-    setState(() {}); // 更新UI
+    setState(() {}); // update UI
   }
 
+  Future<String?> _uploadImageToFirebase(File imageFile) async {
+    try {
+      // 1. Compress the image
+      print("Compressing the image...");
+      final Uint8List? compressedImage = await FlutterImageCompress.compressWithFile(
+        imageFile.path,
+        minWidth: 600,
+        minHeight: 600,
+        quality: 88,
+      );
+
+      if (compressedImage == null) {
+        print('Error compressing the image');
+        return null;
+      }
+      print("Image compressed successfully!");
+
+      // 2. Upload the image to Firebase Storage
+      print("Uploading image to Firebase Storage...");
+      String filePath = 'billImages/${DateTime.now().millisecondsSinceEpoch}.png';
+      final Reference storageReference = FirebaseStorage.instance.ref().child(filePath);
+      final UploadTask uploadTask = storageReference.putData(compressedImage);
+      final TaskSnapshot snapshot = await uploadTask.whenComplete(() => {});
+      if (snapshot.state != TaskState.success) {
+        print('Error uploading the image to Firebase Storage');
+        return null;
+      }
+      print("Image uploaded to Firebase Storage successfully!");
+
+      // 3. Get the download link
+      print("Getting download link from Firebase Storage...");
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      print("Download link obtained: $downloadUrl");
+      return downloadUrl;
+    } catch (e) {
+      print('Error in _uploadImageToFirebase: $e');
+      return null;
+    }
+  }
 
 
   @override
@@ -274,7 +354,8 @@ class _CreateBillState extends State<CreateBill> {
       body: ListView(
         children: [
           Container(
-            margin: const EdgeInsets.only(bottom: 20.0),  // You can adjust this value as per your need
+            margin: const EdgeInsets.only(bottom: 20.0),
+            // You can adjust this value as per your need
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -288,17 +369,9 @@ class _CreateBillState extends State<CreateBill> {
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        "Bill Information",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Palette.primaryColor,
-                        ),
-                      ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 1),
                       billInformationSection(),
-                      SizedBox(height: 16),
+                      SizedBox(height: 1),
                       sharedToSection(),
                     ],
                   ),
@@ -327,197 +400,225 @@ class _CreateBillState extends State<CreateBill> {
     );
   }
 
-
-
-
   Widget billInformationSection() {
     return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                "Bill Information",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+          ),
 
 
-            // Bill Name
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    Text("Bill Name  *", style: TextStyle(fontSize: 16)),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: "Enter bill name",
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
-                      ),
+          // Bill Name
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Bill Name  *", style: TextStyle(fontSize: 16)),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: "Enter bill name",
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Palette.primaryColor, width: 2.0),
                     ),
-                    onChanged: (value) {
-                      _billName = value;
-                    },
                   ),
-                ],
-              ),
+                  onChanged: (value) {
+                    _billName = value;
+                  },
+                ),
+              ],
             ),
+          ),
 
-            // Date
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Date  *", style: TextStyle(fontSize: 16)),
-                  ElevatedButton(
+          // Date
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Date  *", style: TextStyle(fontSize: 16)),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Palette.primaryColor, // 指定按钮背景颜色
+                  ),
+                  onPressed: () async {
+                    DateTime? chosenDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                      builder: (BuildContext context, Widget? child) {
+                        return Theme(
+                          data: ThemeData.light().copyWith(
+                            primaryColor: Palette.primaryColor,
+                            colorScheme: ColorScheme.light(
+                                primary: Palette.primaryColor),
+                            buttonTheme: ButtonThemeData(
+                                textTheme: ButtonTextTheme.primary),
+                            backgroundColor: Palette.primaryColor,
+                            // Background color for header (day, month, year)
+                            dialogBackgroundColor: Colors
+                                .white, // Background color for the main body of date picker
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+
+                    if (chosenDate != null && chosenDate != _selectedDate) {
+                      setState(() {
+                        _selectedDate = chosenDate;
+                      });
+                    }
+                  },
+                  child: Text(_selectedDate == null
+                      ? "Select Date"
+                      : "${_selectedDate!.toLocal()}".split(' ')[0]),
+                ),
+              ],
+            ),
+          ),
+
+          // Bill Price
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Bill Price  *", style: TextStyle(fontSize: 16)),
+                TextField(
+                  keyboardType: TextInputType.number, // Only allow numbers
+                  decoration: InputDecoration(
+                    hintText: "Enter bill price",
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Palette.primaryColor, width: 2.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    _billPrice = double.tryParse(value);
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Description
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Description", style: TextStyle(fontSize: 16)),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: "Enter bill description",
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Palette.primaryColor, width: 2.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    _billDescription = value;
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // select image
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              children: [
+                if (_selectedImage != null) ...[
+                  Image.file(
+                    _selectedImage!,
+                    width: 150, // You can adjust the width and height as per your need
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_forever, color: Colors.grey),
+                    onPressed: _removeImage,
+                  )
+                ] else ...[
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: _pickImage,
+                    label: Text("Choose Image"),
                     style: ElevatedButton.styleFrom(
-                      primary: Palette.primaryColor, // 指定按钮背景颜色
+                      primary: Palette.primaryColor,
                     ),
-                    onPressed: () async {
-                      DateTime? chosenDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                        builder: (BuildContext context, Widget? child) {
-                          return Theme(
-                            data: ThemeData.light().copyWith(
-                              primaryColor: Palette.primaryColor,
-                              colorScheme: ColorScheme.light(primary: Palette.primaryColor),
-                              buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
-                              backgroundColor: Palette.primaryColor, // Background color for header (day, month, year)
-                              dialogBackgroundColor: Colors.white, // Background color for the main body of date picker
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-
-                      if (chosenDate != null && chosenDate != _selectedDate) {
-                        setState(() {
-                          _selectedDate = chosenDate;
-                        });
-                      }
-                    },
-                    child: Text(_selectedDate == null
-                        ? "Select Date"
-                        : "${_selectedDate!.toLocal()}".split(' ')[0]),
                   ),
-                ],
-              ),
+                ]
+              ],
             ),
-
-            // Bill Price
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Bill Price  *", style: TextStyle(fontSize: 16)),
-                  TextField(
-                    keyboardType: TextInputType.number, // Only allow numbers
-                    decoration: InputDecoration(
-                      hintText: "Enter bill price",
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      _billPrice = double.tryParse(value);
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Description
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Description", style: TextStyle(fontSize: 16)),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: "Enter bill description",
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      _billDescription = value;
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
+          ),
+        ],
+      ),
+    );
   }
 
   Widget sharedToSection() {
     return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Shared to  *",
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 12),
-            Container(
-              height: 200.0,
-              child: SingleChildScrollView(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: allPeopleNames.length,
-                  itemBuilder: (context, index) {
-                    return CheckboxListTile(
-                      title: Row(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 0.0), // 与上面的ElevatedButton的左边距相同
-                            child: CircleAvatar(
-                              radius: 15.0,
-                              backgroundColor: Palette.primaryColor,
-                              child: Text(allPeopleNames[index][0].toUpperCase(), style: TextStyle(color: Colors.white)),
-                            ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Shared to  *",
+            style: TextStyle(fontSize: 16),
+          ),
+          SizedBox(height: 12),
+          Container(
+            height: 160.0,
+            child: SingleChildScrollView(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: allPeopleNames.length,
+                itemBuilder: (context, index) {
+                  return CheckboxListTile(
+                    title: Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 0.0),
+                          // 与上面的ElevatedButton的左边距相同
+                          child: CircleAvatar(
+                            radius: 15.0,
+                            backgroundColor: Palette.primaryColor,
+                            child: Text(allPeopleNames[index][0].toUpperCase(),
+                                style: TextStyle(color: Colors.white)),
                           ),
-
-                          SizedBox(width: 10.0),
-                          Text(allPeopleNames[index], style: TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                      value: _selectedPeople.contains(allPeopleNames[index]),
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedPeople.add(allPeopleNames[index]);
-                          } else {
-                            _selectedPeople.remove(allPeopleNames[index]);
-                          }
-                        });
-                      },
-                      activeColor: Palette.primaryColor,
-                    );
-                  },
-
-
-                ),
+                        ),
+                        SizedBox(width: 10.0),
+                        Text(allPeopleNames[index],
+                            style: TextStyle(fontSize: 16)),
+                      ],
+                    ),
+                    value: _selectedPeople.contains(allPeopleNames[index]),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedPeople.add(allPeopleNames[index]);
+                        } else {
+                          _selectedPeople.remove(allPeopleNames[index]);
+                        }
+                      });
+                    },
+                    activeColor: Palette.primaryColor,
+                  );
+                },
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   Widget billSummarySection() {
@@ -531,32 +632,31 @@ class _CreateBillState extends State<CreateBill> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                "Bill Summary",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            Center(),
             SizedBox(height: 12),
             if (_summaryText.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Bill Name: $_billName", style: TextStyle(fontSize: 16)),
-                  Text("Bill Price: \$${_billPrice?.toStringAsFixed(2) ?? '0'}", style: TextStyle(fontSize: 16)),
+                  Text("Bill Price: \$${_billPrice?.toStringAsFixed(2) ?? '0'}",
+                      style: TextStyle(fontSize: 16)),
                 ],
               ),
               SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Date: ${_selectedDate?.toLocal().toString().split(' ')[0]}", style: TextStyle(fontSize: 16)),
-                  Text("People Number: ${_selectedPeople.length}", style: TextStyle(fontSize: 16)),
+                  Text(
+                      "Date: ${_selectedDate?.toLocal().toString().split(' ')[0]}",
+                      style: TextStyle(fontSize: 16)),
+                  Text("People Number: ${_selectedPeople.length}",
+                      style: TextStyle(fontSize: 16)),
                 ],
               ),
               SizedBox(height: 8),
-              Text("Description: $_billDescription", style: TextStyle(fontSize: 16)),
+              Text("Description: $_billDescription",
+                  style: TextStyle(fontSize: 16)),
               SizedBox(height: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,7 +665,9 @@ class _CreateBillState extends State<CreateBill> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(person, style: TextStyle(fontSize: 16)),
-                      Text('\$${(_billPrice! / _selectedPeople.length).toStringAsFixed(2)}', style: TextStyle(fontSize: 16)),
+                      Text(
+                          '\$${(_billPrice! / _selectedPeople.length).toStringAsFixed(2)}',
+                          style: TextStyle(fontSize: 16)),
                     ],
                   );
                 }).toList(),
@@ -575,10 +677,9 @@ class _CreateBillState extends State<CreateBill> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Palette.primaryColor, // Set the button color
-                    padding: EdgeInsets.only(left: 5.0),
                   ),
                   onPressed: _submitBill,
-                  child: Text(_summaryText.isEmpty ? "Split bill" : "Submit bill", style: TextStyle(fontSize: 20)),
+                  child: Text(_summaryText.isEmpty ? "Next" : "Submit bill"),
                 ),
               ),
             ] else ...[
@@ -588,7 +689,7 @@ class _CreateBillState extends State<CreateBill> {
                     primary: Palette.primaryColor, // Set the button color
                   ),
                   onPressed: _splitBill,
-                  child: Text("Split bill", style: TextStyle(fontSize: 20)),
+                  child: Text("Next"),
                 ),
               ),
             ]
@@ -597,9 +698,4 @@ class _CreateBillState extends State<CreateBill> {
       ),
     );
   }
-
-
-
 }
-
-

@@ -108,17 +108,43 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         elevation: 1.0,
         actions: [
-          if (_hasNewBill)
-            IconButton(
-              icon: Icon(Icons.notifications_active, color: Colors.red),
-              onPressed: handleViewBill,
-            )
-          else
-            IconButton(
-              icon: Icon(Icons.notifications_none, color: Colors.grey),
-              onPressed: () {}, // Do nothing or show no new notifications
-            ),
+          Stack(
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.notifications_none, color: Colors.grey),
+                onPressed: () {
+                  if (_hasNewBill) {
+                    handleViewBill();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('You have no new bills.'),
+                      ),
+                    );
+                  }
+                },
+              ),
+              if (_hasNewBill) // Show red dot if there's a new bill
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
+
+
       ),
       body: NotificationListener<BillCreatedNotification>(
         onNotification: (notification) {
@@ -210,6 +236,7 @@ class _HomePageState extends State<HomePage> {
                 stream: FirebaseFirestore.instance
                     .collection('bills')
                     .where('peopleName', arrayContains: userModel.userName)
+                    .limit(3)  // Limit to 3 recent bills
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
@@ -287,6 +314,11 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
+                          onTap: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => BillPage(),
+                            ));
+                          },
                         ),
                       );
                     },

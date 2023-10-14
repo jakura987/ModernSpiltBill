@@ -36,6 +36,17 @@ class BillDetailPage extends StatelessWidget {
     );
   }
 
+  void _showImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context), // Close the dialog when the image is tapped
+          child: Image.network(imageUrl, fit: BoxFit.cover),
+        ),
+      ),
+    );
+  }
 
   Future<void> _markAsSettled(BuildContext context) async {
     // 获取当前用户
@@ -130,6 +141,41 @@ class BillDetailPage extends StatelessWidget {
                   subtitle: Text(bill.billDescription),
                 ),
               ),
+              // Check if the bill has an image
+              if (bill.imageUrl != "" && bill.imageUrl!.isNotEmpty) ...[
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListTile(
+                    title: Text('Bill Image'),
+                    subtitle: GestureDetector(
+                      onTap: () => _showImage(context, bill.imageUrl!),
+                      child: Text(
+                        'Click to view image',
+                        style: TextStyle(
+                          color: Palette.primaryColor,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ] else ...[
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListTile(
+                    title: Text('Bill Image'),
+                    subtitle: Text('No image uploaded'),
+                  ),
+                ),
+              ],
+
               // Average Amount Per Person Card
               Card(
                 margin: EdgeInsets.only(bottom: 15),

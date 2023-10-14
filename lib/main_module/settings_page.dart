@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../constants/palette.dart';
 import '../models/user_model.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -30,9 +30,12 @@ class _SettingsPageState extends State<SettingsPage> {
     isWeeklyEnabled = false;
     isMonthlyEnabled = false;
     // 根据开关的状态来初始化TextFormField的controller的值
-    _dailyController.text = isDailyEnabled ? (dailyLimit?.toString() ?? '') : '';
-    _weeklyController.text = isWeeklyEnabled ? (weeklyLimit?.toString() ?? '') : '';
-    _monthlyController.text = isMonthlyEnabled ? (monthlyLimit?.toString() ?? '') : '';
+    _dailyController.text =
+        isDailyEnabled ? (dailyLimit?.toString() ?? '') : '';
+    _weeklyController.text =
+        isWeeklyEnabled ? (weeklyLimit?.toString() ?? '') : '';
+    _monthlyController.text =
+        isMonthlyEnabled ? (monthlyLimit?.toString() ?? '') : '';
     // 在页面加载时调用fetchUser方法
     final userModel = Provider.of<UserModel>(context, listen: false);
     userModel.fetchUser(context).then((_) {
@@ -57,47 +60,60 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        iconTheme: IconThemeData(color: Colors.black),
+        title: Text('Settings', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 1.0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Spending Limits', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-              _buildLimitField('Daily Limit:', _dailyController, isDailyEnabled, (value) {
-                setState(() {
-                  isDailyEnabled = value;
-                });
-              }),
-              SizedBox(height: 15),
-              _buildLimitField('Weekly Limit:', _weeklyController, isWeeklyEnabled, (value) {
-                setState(() {
-                  isWeeklyEnabled = value;
-                });
-              }),
-              SizedBox(height: 15),
-              _buildLimitField('Monthly Limit:', _monthlyController, isMonthlyEnabled, (value) {
-                setState(() {
-                  isMonthlyEnabled = value;
-                });
-              }),
-              Spacer(),
-              ElevatedButton(
-                onPressed: _saveLimits,
-                child: Text('Save Limits'),
-              )
-            ],
-          ),
-        )
-      ),
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Spending Limits',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
+                _buildLimitField(
+                    'Daily Limit:', _dailyController, isDailyEnabled, (value) {
+                  setState(() {
+                    isDailyEnabled = value;
+                  });
+                }),
+                SizedBox(height: 15),
+                _buildLimitField(
+                    'Weekly Limit:', _weeklyController, isWeeklyEnabled,
+                    (value) {
+                  setState(() {
+                    isWeeklyEnabled = value;
+                  });
+                }),
+                SizedBox(height: 15),
+                _buildLimitField(
+                    'Monthly Limit:', _monthlyController, isMonthlyEnabled,
+                    (value) {
+                  setState(() {
+                    isMonthlyEnabled = value;
+                  });
+                }),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: _saveLimits,
+                  child: Text('Save Limits'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Palette.primaryColor,
+                  ),
+                )
+              ],
+            ),
+          )),
     );
   }
 
-  Widget _buildLimitField(String label, TextEditingController controller, bool isEnabled, ValueChanged<bool> onChanged) {
+  Widget _buildLimitField(String label, TextEditingController controller,
+      bool isEnabled, ValueChanged<bool> onChanged) {
     return Row(
       children: [
         Switch(
@@ -123,29 +139,33 @@ class _SettingsPageState extends State<SettingsPage> {
         SizedBox(width: 10),
         Expanded(
           child: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-            validator: (value) {
-              if (isEnabled && (value == null || value.isEmpty || double.parse(value) < 0)) {
-                return 'Please enter a valid amount';
-              }
-              return null;
-            },
-            decoration: InputDecoration(hintText: isEnabled ? '0.00' : ''),
-            enabled: isEnabled
-          ),
+              controller: controller,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (isEnabled &&
+                    (value == null ||
+                        value.isEmpty ||
+                        double.parse(value) < 0)) {
+                  return 'Please enter a valid amount';
+                }
+                return null;
+              },
+              decoration: InputDecoration(hintText: isEnabled ? '0.00' : ''),
+              enabled: isEnabled),
         ),
       ],
     );
   }
 
-
   void _saveLimits() {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
-        dailyLimit = isDailyEnabled ? double.tryParse(_dailyController.text) : null;
-        weeklyLimit = isWeeklyEnabled ? double.tryParse(_weeklyController.text) : null;
-        monthlyLimit = isMonthlyEnabled ? double.tryParse(_monthlyController.text) : null;
+        dailyLimit =
+            isDailyEnabled ? double.tryParse(_dailyController.text) : null;
+        weeklyLimit =
+            isWeeklyEnabled ? double.tryParse(_weeklyController.text) : null;
+        monthlyLimit =
+            isMonthlyEnabled ? double.tryParse(_monthlyController.text) : null;
       });
 
       // 调用 UserModel 中的 updateLimits 方法来更新限额
@@ -153,24 +173,14 @@ class _SettingsPageState extends State<SettingsPage> {
       userModel.updateLimits(dailyLimit, weeklyLimit, monthlyLimit).then((_) {
         // 提示用户数据已经保存
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Limits updated successfully!'))
-        );
+            SnackBar(content: Text('Limits updated successfully!')));
       }).catchError((error) {
         // 如果出现错误，提示用户
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating limits: $error'))
-        );
+            SnackBar(content: Text('Error updating limits: $error')));
       });
     } else {
       // 如果验证不通过，你可以选择显示一些提示信息给用户
     }
   }
-
-
-
-
-
 }
-
-
-

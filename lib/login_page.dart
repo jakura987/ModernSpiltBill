@@ -73,10 +73,10 @@ class _LoginFormState extends State<LoginForm> {
       String message;
       switch (authService.errorCode) {
         case 'invalid-email':
-          message = 'Bob found your email address format is incorrect';
+          message = 'your email address format is incorrect';
           break;
         case 'INVALID_LOGIN_CREDENTIALS':
-          message = 'Bob suggests checking if your email address and password are correct';
+          message = 'checking if your email address and password are correct';
           break;
         default:
           message = 'login fail: ${authService.errorMessage}';

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../login_page.dart';
 import '../models/user_avatar_model.dart';
 import '../models/user_model.dart';
+import '../contact_us_page.dart';
 
 class MePage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -105,8 +106,7 @@ class MePage extends StatelessWidget {
 
   List<Widget> _buildFunctionList(BuildContext context) {
     final functions = [
-      'Notifications',
-      'Rate us',
+      // 'Notifications',
       'Contact us',
       'Settings'
     ];
@@ -122,7 +122,13 @@ class MePage extends StatelessWidget {
             MaterialPageRoute(builder: (context) => SettingsPage()),
           );
         }
-        // 在此，你可以根据其他的功能名称添加更多的跳转逻辑
+        if (name == 'Contact us') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ContactUsPage()),
+          );
+        }
+        // add more
       },
       child: Container(
         decoration: BoxDecoration(

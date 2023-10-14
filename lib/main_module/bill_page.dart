@@ -14,6 +14,7 @@ class Bill {
   final String billDescription;
   final double AAPP;
   final List<PersonStatus> peopleStatus;
+  final String imageUrl;
 
   Bill({
     required this.documentId, // <-- Add this
@@ -24,7 +25,9 @@ class Bill {
     required this.billDescription,
     required this.AAPP,
     required this.peopleStatus,
+    required this.imageUrl,
   });
+
 }
 
 
@@ -191,6 +194,7 @@ class _ShowBillState extends State<BillPage>
                 AAPP: data['AAPP']?.toDouble() ?? 0.0,
                 peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(
                     data['peopleStatus']) : [],
+                imageUrl: data['imageUrl'] ?? "",
               ),
             );
           } else {
