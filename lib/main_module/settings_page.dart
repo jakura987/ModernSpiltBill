@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/user_model.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -18,6 +21,37 @@ class _SettingsPageState extends State<SettingsPage> {
   final _dailyController = TextEditingController();
   final _weeklyController = TextEditingController();
   final _monthlyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 设置开关默认为关闭
+    isDailyEnabled = false;
+    isWeeklyEnabled = false;
+    isMonthlyEnabled = false;
+    // 根据开关的状态来初始化TextFormField的controller的值
+    _dailyController.text = isDailyEnabled ? (dailyLimit?.toString() ?? '') : '';
+    _weeklyController.text = isWeeklyEnabled ? (weeklyLimit?.toString() ?? '') : '';
+    _monthlyController.text = isMonthlyEnabled ? (monthlyLimit?.toString() ?? '') : '';
+    // 在页面加载时调用fetchUser方法
+    final userModel = Provider.of<UserModel>(context, listen: false);
+    userModel.fetchUser(context).then((_) {
+      // 从UserModel中获取数据并设置到本地变量
+      setState(() {
+        dailyLimit = userModel.dailyLimit;
+        weeklyLimit = userModel.weeklyLimit;
+        monthlyLimit = userModel.monthlyLimit;
+
+        _dailyController.text = dailyLimit?.toString() ?? '';
+        _weeklyController.text = weeklyLimit?.toString() ?? '';
+        _monthlyController.text = monthlyLimit?.toString() ?? '';
+
+        isDailyEnabled = dailyLimit != null;
+        isWeeklyEnabled = weeklyLimit != null;
+        isMonthlyEnabled = monthlyLimit != null;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +102,22 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         Switch(
           value: isEnabled,
-          onChanged: onChanged,
+          onChanged: (bool newValue) {
+            onChanged(newValue); // 这里调用了onChanged回调，以便更新isXXXEnabled状态
+            setState(() {
+              if (newValue) {
+                // 如果开关被打开了
+                if (label == 'Daily Limit:') {
+                  controller.text = dailyLimit?.toString() ?? '';
+                } else if (label == 'Weekly Limit:') {
+                  controller.text = weeklyLimit?.toString() ?? '';
+                } else if (label == 'Monthly Limit:') {
+                  controller.text = monthlyLimit?.toString() ?? '';
+                }
+              }
+              // 无需其他操作，因为当开关关闭时TextFormField应始终显示数据库中的值，并且由`enabled: isEnabled`确保其不可修改。
+            });
+          },
         ),
         Text(label, style: TextStyle(fontSize: 16)),
         SizedBox(width: 10),
@@ -83,7 +132,7 @@ class _SettingsPageState extends State<SettingsPage> {
               return null;
             },
             decoration: InputDecoration(hintText: isEnabled ? '0.00' : ''),
-            enabled: isEnabled,
+            enabled: isEnabled
           ),
         ),
       ],
@@ -99,19 +148,27 @@ class _SettingsPageState extends State<SettingsPage> {
         monthlyLimit = isMonthlyEnabled ? double.tryParse(_monthlyController.text) : null;
       });
 
-      // 这里你可以保存到本地存储或Firebase
-      // 保存到数据库
-      Map<String, dynamic> data = {
-        'dailyLimit': isDailyEnabled ? dailyLimit : null,
-        'weeklyLimit': isWeeklyEnabled ? weeklyLimit : null,
-        'monthlyLimit': isMonthlyEnabled ? monthlyLimit : null,
-      };
-
-      // ... 这里的代码用于保存数据到数据库
+      // 调用 UserModel 中的 updateLimits 方法来更新限额
+      final userModel = Provider.of<UserModel>(context, listen: false);
+      userModel.updateLimits(dailyLimit, weeklyLimit, monthlyLimit).then((_) {
+        // 提示用户数据已经保存
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Limits updated successfully!'))
+        );
+      }).catchError((error) {
+        // 如果出现错误，提示用户
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating limits: $error'))
+        );
+      });
     } else {
       // 如果验证不通过，你可以选择显示一些提示信息给用户
     }
   }
+
+
+
+
 
 }
 

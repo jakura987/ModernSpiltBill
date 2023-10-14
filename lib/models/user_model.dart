@@ -53,10 +53,28 @@ class UserModel extends ChangeNotifier {
     userAvatar.avatarPath = 'assets/images/image${_head}.jpg';
 
 
-
-
     notifyListeners(); // Don't forget to notify listeners
   }
+
+  Future<void> updateLimits(double? daily, double? weekly, double? monthly) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore.collection('users')
+        .where('email', isEqualTo: user.email)
+        .get()
+        .then((querySnapshot) {
+      if (querySnapshot.size > 0) {
+        final docId = querySnapshot.docs.first.id;
+        _firestore.collection('users').doc(docId).update({
+          'dailyLimit': daily,
+          'weeklyLimit': weekly,
+          'monthlyLimit': monthly,
+        });
+      }
+    });
+  }
+
 
 }
 
