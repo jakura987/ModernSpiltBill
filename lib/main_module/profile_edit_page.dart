@@ -92,76 +92,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     super.dispose();
   }
 
-  //TODO: 修改后要重新登录才会显示修改后的名字
-  Future<void> _renameUser() async {
-    String? newName = await _showRenameDialog();
-    if (newName != null && newName.isNotEmpty) {
-      final user = _auth.currentUser;
-      if (user != null) {
-        // 查找与用户邮箱匹配的文档
-        final userDocs = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: user.email)
-            .limit(1)
-            .get();
 
-        if (userDocs.size == 0) {
-          print("Document not found");
-          return;
-        }
 
-        // 使用找到的文档ID来更新用户名
-        await _firestore
-            .collection('users')
-            .doc(userDocs.docs.first.id)
-            .update({'name': newName});
-
-        setState(() {}); // 更新UI
-      }
-    }
-  }
-
-  //修改名字的部分页面
-  Future<String?> _showRenameDialog() async {
-    String? newName;
-    final TextEditingController nameController = TextEditingController();
-
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Rename'),
-          content: TextField(
-            controller: nameController,
-            decoration: InputDecoration(
-              labelText: 'New name',
-              labelStyle: TextStyle(color: Palette.primaryColor),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Palette.primaryColor),
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel',
-                  style: TextStyle(color: Palette.secondaryColor)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child:
-                  Text('Rename', style: TextStyle(color: Palette.primaryColor)),
-              onPressed: () {
-                newName = nameController.text.trim();
-                Navigator.of(context).pop(newName);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   //修改密码
   Future<bool> _showPasswordVerificationDialog() async {
@@ -284,7 +216,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     double screenHeight = MediaQuery.of(context).size.height;
 
     int? userHeadValue = userModel.head;  // 获取 head 的值
-    String avatarPath = 'assets/images/image${_currentHeadValue ?? 1}.jpg';  // 根据 head 值构造头像的资产路径
+    String avatarPath = userAvatar.avatarPath;  // 根据 head 值构造头像的资产路径
 
     return Scaffold(
       backgroundColor: Palette.backgroundColor,
@@ -353,10 +285,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     children: [
                       Text('Name: ', style: TextStyle(fontSize: 18)),
                       SizedBox(width: 10), // Horizontal spacing
-                      InkWell(
-                        onTap: _renameUser,
-                        child: Icon(Icons.edit, size: 20),
-                      ),
                     ],
                   ),
                   subtitle: Column(

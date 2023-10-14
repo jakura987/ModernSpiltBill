@@ -57,48 +57,51 @@ class MePage extends StatelessWidget {
   }
 
   Widget _buildProfileSection(BuildContext context) {
-    final userProfile = Provider.of<UserAvatar>(context);
-    final userModel = Provider.of<UserModel>(context);
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => ProfileEditPage()));
-      },
-      child: Container(
-        color: Colors.white, // 设置外部容器的颜色
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: <Widget>[
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage(userProfile.avatarPath),
-              ),
-              SizedBox(width: 20),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(userModel.userName ?? 'Username',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 5),
-                      Text(userModel.userEmail ?? 'user@email.com',
-                          style: TextStyle(fontSize: 15)),
-                    ],
+    return Consumer2<UserAvatar, UserModel>(
+      builder: (context, userProfile, userModel, child) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ProfileEditPage()));
+          },
+          child: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: AssetImage(userProfile.avatarPath),
                   ),
-                ),
+                  SizedBox(width: 20),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(userModel.userName ?? 'Username',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 5),
+                          Text(userModel.userEmail ?? 'user@email.com',
+                              style: TextStyle(fontSize: 15)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                ],
               ),
-              Icon(Icons.arrow_forward_ios, color: Colors.grey),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+
 
   List<Widget> _buildFunctionList(BuildContext context) {
     final functions = [

@@ -20,7 +20,7 @@ class _ChooseGroupState extends State<ChooseGroup> {
       _isInit = false;
       // 调用 UserModel 的 fetchUser 方法
       final userModel = Provider.of<UserModel>(context, listen: false);
-      userModel.fetchUser();
+      userModel.fetchUser(context);
     }
     super.didChangeDependencies();
   }
@@ -46,6 +46,12 @@ class _ChooseGroupState extends State<ChooseGroup> {
           stream: _firestore.collection('groups').where('peopleName', arrayContains: userModel.userName).snapshots(),
           builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (!snapshot.hasData) return CircularProgressIndicator();
+
+            if (snapshot.data!.docs.isEmpty) {
+              return Center(
+                  child: Text("You currently have no groups", style: TextStyle(color: Colors.black, fontSize: 18))
+              );
+            }
             return ListView.builder(
               itemCount: snapshot.data!.docs.length,
               itemBuilder: (context, index) {

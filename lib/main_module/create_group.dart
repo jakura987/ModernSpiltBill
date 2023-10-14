@@ -50,7 +50,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     }
 
     CollectionReference groups =
-        FirebaseFirestore.instance.collection('groups');
+    FirebaseFirestore.instance.collection('groups');
     await groups.add({
       'groupName': _groupNameController.text,
       'peopleName': selectedUsers,
@@ -86,10 +86,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
+        child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
             Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 Text('Group Name',
                     style: TextStyle(
@@ -102,9 +103,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     ),
                     focusedBorder: UnderlineInputBorder(
                       borderSide:
-                          BorderSide(color: Palette.primaryColor, width: 2.0),
+                      BorderSide(color: Palette.primaryColor, width: 2.0),
                     ),
-                    contentPadding: EdgeInsets.only(top: 5.0, bottom: 5.0),
+                    contentPadding: EdgeInsets.only(top: 20.0, bottom: 0.0),
                   ),
                 ),
               ],
@@ -113,78 +114,83 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             const Text('Group Members',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ...selectedUsers.map((user) => ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Palette.primaryColor,
-                child: Text(
-                  user[0].toUpperCase(), // This will display the first letter of the user's name
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-              title: Text(user),
-              subtitle: user == Provider.of<UserModel>(context).userName ? Text('You must be a member of this group.') : null,
-              trailing: user == Provider.of<UserModel>(context).userName
-                  ? null
-                  : IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    selectedUsers.remove(user);
-                  });
-                },
-              ),
-            )).toList(),
-            const SizedBox(height: 20),
-            const Text('Add user',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Search User by Email',
-                    style: TextStyle(color: Colors.black)),
-                TextField(
-                  controller: _searchUserController,
-                  decoration: InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Palette.primaryColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide:
+      leading: CircleAvatar(
+      backgroundColor: Palette.primaryColor,
+        child: Text(
+          user[0].toUpperCase(), // This will display the first letter of the user's name
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      title: Text(user),
+      subtitle: user == Provider.of<UserModel>(context).userName ? Text('You must be a member of this group.') : null,
+      trailing: user == Provider.of<UserModel>(context).userName
+          ? null
+          : IconButton(
+        icon: Icon(Icons.close),
+        onPressed: () {
+          setState(() {
+            selectedUsers.remove(user);
+          });
+        },
+      ),
+    )).toList(),
+                const SizedBox(height: 20),
+                const Text('Add user',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(height: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('Search User by Email',
+                        style: TextStyle(color: Colors.black)),
+                    TextField(
+                      controller: _searchUserController,
+                      decoration: InputDecoration(
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Palette.primaryColor),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide:
                           BorderSide(color: Palette.primaryColor, width: 2.0),
+                        ),
+
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.search, color: Palette.primaryColor),
+                          onPressed: () {
+                            searchUser(_searchUserController.text);
+                          },
+                        ),
+                        contentPadding: EdgeInsets.only(top: 20.0, bottom: 0.0),
+                      ),
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.search, color: Palette.primaryColor),
-                      onPressed: () {
-                        searchUser(_searchUserController.text);
-                      },
-                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Container(
+                  height: (searchResults.length * 60.0), // Assuming each ListTile is 60.0 pixels high
+                  child: ListView.builder(
+                    itemCount: searchResults.length,
+                    itemBuilder: (context, index) {
+                      final user = searchResults[index];
+                      return ListTile(
+                        title: Text(user),
+                        trailing: IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            if (!selectedUsers.contains(user)) {
+                              setState(() {
+                                selectedUsers.add(user);
+                              });
+                            }
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
+
               ],
             ),
-            SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: searchResults.length,
-                itemBuilder: (context, index) {
-                  final user = searchResults[index];
-                  return ListTile(
-                    title: Text(user),
-                    trailing: IconButton(
-                      icon: Icon(Icons.add),
-                      onPressed: () {
-                        if (!selectedUsers.contains(user)) {
-                          setState(() {
-                            selectedUsers.add(user);
-                          });
-                        }
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
         ),
       ),
     );

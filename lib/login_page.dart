@@ -6,6 +6,7 @@ import 'package:spiltbill/dashed_line.dart';
 import 'package:spiltbill/navigate_page.dart';
 import 'package:spiltbill/register_page.dart';
 import '../auth_service.dart';
+import 'models/user_model.dart';
 import 'welcome_page.dart';
 
 //TODO 将颜色背景之类的写成常量放一个文件
@@ -14,7 +15,7 @@ const kSecondaryColor = Color(0xffDBDBDB);
 const kDontHaveAccountColor = Color(0xffBABEBD);
 final kFillColor = Colors.grey[200];
 const kAppName = 'SplitBill';
-const kUsernameHint = 'Username';
+const kUsernameHint = 'Email';
 const kPasswordHint = 'Password';
 const kLoginButtonText = 'Login';
 const kRegisterButtonText = 'Register';
@@ -58,6 +59,10 @@ class _LoginFormState extends State<LoginForm> {
     final userCredential = await authService.signIn(email, password);
 
     if (userCredential != null) {
+      final userModel = Provider.of<UserModel>(context, listen: false);
+
+      // 调用 UserModel 的 fetchUser 方法
+      await userModel.fetchUser(context);
       // 如果登录成功，导航到 NavigatePage 页面
       Navigator.pushReplacement(
         context,

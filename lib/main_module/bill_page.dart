@@ -66,7 +66,7 @@ class _ShowBillState extends State<BillPage>
       _isInit = false;
       // 调用 UserModel 的 fetchUser 方法
       final userModel = Provider.of<UserModel>(context, listen: false);
-      userModel.fetchUser();
+      userModel.fetchUser(context);
     }
     super.didChangeDependencies();
   }
@@ -161,6 +161,12 @@ class _ShowBillState extends State<BillPage>
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.data!.docs.isEmpty) {
+          return Center(
+              child: Text("You currently have no bills", style: TextStyle(color: Colors.grey, fontSize: 18))
+          );
         }
 
         List<BillBox> bills = snapshot.data!.docs.map((

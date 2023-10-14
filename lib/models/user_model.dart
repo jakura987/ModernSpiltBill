@@ -1,6 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:spiltbill/models/user_avatar_model.dart';
+
 
 class UserModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -20,7 +24,8 @@ class UserModel extends ChangeNotifier {
   double? get monthlyLimit => _monthlyLimit;
   int? get head => _head;
 
-  Future<void> fetchUser() async {
+
+  Future<void> fetchUser(BuildContext context) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
@@ -44,6 +49,11 @@ class UserModel extends ChangeNotifier {
     _monthlyLimit = userDoc.docs.first['monthlyLimit'] != null
         ? (userDoc.docs.first['monthlyLimit'] as num).toDouble()
         : null;
+    final userAvatar = Provider.of<UserAvatar>(context, listen: false);
+    userAvatar.avatarPath = 'assets/images/image${_head}.jpg';
+
+
+
 
     notifyListeners(); // Don't forget to notify listeners
   }

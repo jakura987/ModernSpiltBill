@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
     if (_isInit) {
       _isInit = false;
       final userModel = Provider.of<UserModel>(context, listen: false);
-      userModel.fetchUser();
+      userModel.fetchUser(context);
       _checkUserStatus();
     }
     super.didChangeDependencies();
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _checkUserStatus() async {
     final userModel = Provider.of<UserModel>(context, listen: false);
-    await userModel.fetchUser();
+    await userModel.fetchUser(context);
     setState(() {
       _currentUserName = userModel.userName;
     });
@@ -221,6 +221,15 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   final bills = snapshot.data?.docs ?? [];
+                  if (bills.isEmpty) {
+                    // 如果没有账单，显示提示消息
+                    return Center(
+                      child: Text(
+                        "You recently have no bills.",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    );
+                  }
                   return ListView.builder(
                     itemCount: bills.length,
                     itemBuilder: (context, index) {

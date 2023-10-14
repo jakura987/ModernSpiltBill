@@ -4,6 +4,7 @@ import 'package:spiltbill/main_module/choose_group.dart';
 import 'package:spiltbill/navigate_page.dart';
 import '../constants/palette.dart';
 import '../bill_created_notification.dart';
+import '../dashed_line.dart';
 import 'home_page.dart';
 
 
@@ -270,63 +271,63 @@ class _CreateBillState extends State<CreateBill> {
         ),
         elevation: 0.0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Palette.primaryColor, Palette.primaryColor],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Card(
+      body: ListView(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 20.0),  // You can adjust this value as per your need
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // First Container
+                Container(
+                  width: 380,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Bill Information
+                      Text(
+                        "Bill Information",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Palette.primaryColor,
+                        ),
+                      ),
+                      SizedBox(height: 16),
                       billInformationSection(),
-
-                      SizedBox(height: 20),
-
-                      // Shared to
+                      SizedBox(height: 16),
                       sharedToSection(),
                     ],
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Palette.primaryColor, Palette.primaryColor],
+                // Dashed Line (If you want a separator like in LoginPage)
+                DashedLine(width: 380),
+                // Second Container
+                Container(
+                  width: 380,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      billSummarySection(),
+                    ],
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Bill Summary
-                    billSummarySection(),
-                  ],
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+
 
 
   Widget billInformationSection() {
@@ -382,8 +383,21 @@ class _CreateBillState extends State<CreateBill> {
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
+                        lastDate: DateTime.now(),
+                        builder: (BuildContext context, Widget? child) {
+                          return Theme(
+                            data: ThemeData.light().copyWith(
+                              primaryColor: Palette.primaryColor,
+                              colorScheme: ColorScheme.light(primary: Palette.primaryColor),
+                              buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+                              backgroundColor: Palette.primaryColor, // Background color for header (day, month, year)
+                              dialogBackgroundColor: Colors.white, // Background color for the main body of date picker
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
+
                       if (chosenDate != null && chosenDate != _selectedDate) {
                         setState(() {
                           _selectedDate = chosenDate;
@@ -468,7 +482,21 @@ class _CreateBillState extends State<CreateBill> {
                   itemCount: allPeopleNames.length,
                   itemBuilder: (context, index) {
                     return CheckboxListTile(
-                      title: Text(allPeopleNames[index], style: TextStyle(fontSize: 16)),
+                      title: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 0.0), // 与上面的ElevatedButton的左边距相同
+                            child: CircleAvatar(
+                              radius: 15.0,
+                              backgroundColor: Palette.primaryColor,
+                              child: Text(allPeopleNames[index][0].toUpperCase(), style: TextStyle(color: Colors.white)),
+                            ),
+                          ),
+
+                          SizedBox(width: 10.0),
+                          Text(allPeopleNames[index], style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
                       value: _selectedPeople.contains(allPeopleNames[index]),
                       onChanged: (bool? value) {
                         setState(() {
@@ -479,8 +507,11 @@ class _CreateBillState extends State<CreateBill> {
                           }
                         });
                       },
+                      activeColor: Palette.primaryColor,
                     );
                   },
+
+
                 ),
               ),
             ),
@@ -490,7 +521,11 @@ class _CreateBillState extends State<CreateBill> {
   }
 
   Widget billSummarySection() {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -540,12 +575,12 @@ class _CreateBillState extends State<CreateBill> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Palette.primaryColor, // Set the button color
+                    padding: EdgeInsets.only(left: 5.0),
                   ),
                   onPressed: _submitBill,
                   child: Text(_summaryText.isEmpty ? "Split bill" : "Submit bill", style: TextStyle(fontSize: 20)),
                 ),
               ),
-
             ] else ...[
               Center(
                 child: ElevatedButton(
@@ -556,13 +591,13 @@ class _CreateBillState extends State<CreateBill> {
                   child: Text("Split bill", style: TextStyle(fontSize: 20)),
                 ),
               ),
-
             ]
           ],
         ),
       ),
     );
   }
+
 
 
 }

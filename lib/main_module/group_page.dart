@@ -54,7 +54,9 @@ class GroupPage extends StatelessWidget {
                     return members.contains(userModel.userName);
                   }).toList();
 
-                  return ListView.builder(
+                  return groupsWithCurrentUser.isEmpty
+                      ? Center(child: Text("You currently have no groups", style: TextStyle(color: Colors.grey, fontSize: 18)))
+                      : ListView.builder(
                     itemCount: groupsWithCurrentUser.length,
                     itemBuilder: (context, index) {
                       final group = groupsWithCurrentUser[index];
@@ -102,6 +104,7 @@ class GroupPage extends StatelessWidget {
                       );
                     },
                   );
+
                 },
               ),
             ),
