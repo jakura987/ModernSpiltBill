@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:SpiltBill/navigate_page.dart';
+import 'package:SplitBill/navigate_page.dart';
 import '../constants/palette.dart';
 import '../bill_created_notification.dart';
 import '../dashed_line.dart';

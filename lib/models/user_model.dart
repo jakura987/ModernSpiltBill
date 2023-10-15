@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:SpiltBill/models/user_avatar_model.dart';
+import 'package:SplitBill/models/user_avatar_model.dart';
 
 
 class UserModel extends ChangeNotifier {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:SpiltBill/main_module/profile_edit_page.dart';
-import 'package:SpiltBill/main_module/settings_page.dart';
+import 'package:SplitBill/main_module/profile_edit_page.dart';
+import 'package:SplitBill/main_module/settings_page.dart';
 import '../constants/palette.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:SpiltBill/dashed_line.dart';
-import 'package:SpiltBill/navigate_page.dart';
-import 'package:SpiltBill/register_page.dart';
+import 'package:SplitBill/dashed_line.dart';
+import 'package:SplitBill/navigate_page.dart';
+import 'package:SplitBill/register_page.dart';
 import '../auth_service.dart';
 import 'models/user_model.dart';
 import 'constants/palette.dart';

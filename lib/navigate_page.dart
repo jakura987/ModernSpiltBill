@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SpiltBill/main_module/settings_page.dart';
+import 'package:SplitBill/main_module/settings_page.dart';
 import 'main_module/bill_page.dart';
 import 'main_module/group_page.dart';
 import 'main_module/home_page.dart';
