@@ -49,7 +49,7 @@ class _ChooseGroupState extends State<ChooseGroup> {
 
             if (snapshot.data!.docs.isEmpty) {
               return Center(
-                  child: Text("You currently have no groups", style: TextStyle(color: Colors.black, fontSize: 18))
+                  child: Text("You currently have no groups", style: TextStyle(color: Colors.white, fontSize: 18))
               );
             }
             return ListView.builder(

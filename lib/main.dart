@@ -1,12 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
-import 'package:spiltbill/main_module/choose_group.dart';
-import 'package:spiltbill/main_module/bill_page.dart';
-import 'package:spiltbill/models/user_avatar_model.dart';
-import 'package:spiltbill/models/user_model.dart';
+import 'package:SpiltBill/models/user_avatar_model.dart';
+import 'package:SpiltBill/models/user_model.dart';
 import 'auth_service.dart';
 import 'firebase_options.dart';
 import 'login_page.dart';
@@ -39,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: kAppName,
       theme: ThemeData(
         primaryColor: kPrimaryColor,

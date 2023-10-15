@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:spiltbill/models/user_avatar_model.dart';
+import 'package:SpiltBill/models/user_avatar_model.dart';
 
 
 class UserModel extends ChangeNotifier {
@@ -51,9 +50,7 @@ class UserModel extends ChangeNotifier {
         : null;
     final userAvatar = Provider.of<UserAvatar>(context, listen: false);
     userAvatar.avatarPath = 'assets/images/image${_head}.jpg';
-
-
-    notifyListeners(); // Don't forget to notify listeners
+    notifyListeners(); // notify listeners
   }
 
   Future<void> updateLimits(double? daily, double? weekly, double? monthly) async {
@@ -74,8 +71,6 @@ class UserModel extends ChangeNotifier {
       }
     });
   }
-
-
 }
 
 

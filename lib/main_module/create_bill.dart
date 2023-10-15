@@ -1,9 +1,7 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:spiltbill/main_module/choose_group.dart';
-import 'package:spiltbill/navigate_page.dart';
+import 'package:SpiltBill/navigate_page.dart';
 import '../constants/palette.dart';
 import '../bill_created_notification.dart';
 import '../dashed_line.dart';
@@ -121,12 +119,12 @@ class _CreateBillState extends State<CreateBill> {
             mainAxisSize: MainAxisSize.min,
             // This makes the column only as tall as its children.
             children: exceededUsers
-                .map((user) => Text('$user have exceeded daily limit.'))
+                .map((user) => Text('$user has exceeded daily limit.'))
                 .toList(),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: Text('OK',style: TextStyle(color: Palette.primaryColor)),
               onPressed: () {
                 Navigator.pushAndRemoveUntil(
                     context,
@@ -632,9 +630,10 @@ class _CreateBillState extends State<CreateBill> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(),
-            SizedBox(height: 12),
             if (_summaryText.isNotEmpty) ...[
+              Text("Bill Summary", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Divider(thickness: 1.5),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -643,7 +642,7 @@ class _CreateBillState extends State<CreateBill> {
                       style: TextStyle(fontSize: 16)),
                 ],
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -654,32 +653,35 @@ class _CreateBillState extends State<CreateBill> {
                       style: TextStyle(fontSize: 16)),
                 ],
               ),
-              SizedBox(height: 8),
-              Text("Description: $_billDescription",
-                  style: TextStyle(fontSize: 16)),
-              SizedBox(height: 8),
+              SizedBox(height: 12),
+              Text("Description: $_billDescription", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: _selectedPeople.map((person) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(person, style: TextStyle(fontSize: 16)),
-                      Text(
-                          '\$${(_billPrice! / _selectedPeople.length).toStringAsFixed(2)}',
-                          style: TextStyle(fontSize: 16)),
-                    ],
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(person, style: TextStyle(fontSize: 16)),
+                        Text(
+                            '\$${(_billPrice! / _selectedPeople.length).toStringAsFixed(2)}',
+                            style: TextStyle(fontSize: 16)),
+                      ],
+                    ),
                   );
                 }).toList(),
               ),
-              SizedBox(height: 16.0),
+              SizedBox(height: 20.0),
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Palette.primaryColor, // Set the button color
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), // Increase the button size
                   ),
                   onPressed: _submitBill,
-                  child: Text(_summaryText.isEmpty ? "Next" : "Submit bill"),
+                  child: Text(_summaryText.isEmpty ? "Next" : "Submit bill", style: TextStyle(fontSize: 18)),
                 ),
               ),
             ] else ...[
@@ -687,9 +689,10 @@ class _CreateBillState extends State<CreateBill> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Palette.primaryColor, // Set the button color
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), // Increase the button size
                   ),
                   onPressed: _splitBill,
-                  child: Text("Next"),
+                  child: Text("Next", style: TextStyle(fontSize: 18)),
                 ),
               ),
             ]
@@ -698,4 +701,5 @@ class _CreateBillState extends State<CreateBill> {
       ),
     );
   }
+
 }

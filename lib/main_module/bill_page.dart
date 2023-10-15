@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../constants/palette.dart';
-import 'Bill_Detail_Page.dart';
+import 'bill_detail_page.dart';
 
 class Bill {
   final String documentId; // <-- Add this

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:spiltbill/main_module/profile_edit_page.dart';
-import 'package:spiltbill/main_module/settings_page.dart';
+import 'package:SpiltBill/main_module/profile_edit_page.dart';
+import 'package:SpiltBill/main_module/settings_page.dart';
 import '../constants/palette.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +8,7 @@ import '../login_page.dart';
 import '../models/user_avatar_model.dart';
 import '../models/user_model.dart';
 import '../contact_us_page.dart';
+import 'monthly_expenses_review.dart';
 
 class MePage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -107,6 +108,7 @@ class MePage extends StatelessWidget {
   List<Widget> _buildFunctionList(BuildContext context) {
     final functions = [
       // 'Notifications',
+      'Monthly expenses review',
       'Contact us',
       'Settings'
     ];
@@ -126,6 +128,12 @@ class MePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => ContactUsPage()),
+          );
+        }
+        if (name == 'Monthly expenses review') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MonthlyExpensesPage()),
           );
         }
         // add more

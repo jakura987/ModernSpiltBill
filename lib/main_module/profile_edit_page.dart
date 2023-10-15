@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:spiltbill/models/user_avatar_model.dart';
+import 'package:SpiltBill/models/user_avatar_model.dart';
 import '../models/user_model.dart';
 import '../constants/palette.dart';
 
@@ -47,11 +47,6 @@ Future<int?> _showImagePicker(BuildContext context) async {
   );
 }
 
-
-
-
-
-
 class _ProfileEditPageState extends State<ProfileEditPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -86,110 +81,30 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     }
   }
 
-
   @override
   void dispose() {
     super.dispose();
   }
 
+  Future<void> _resetPassword() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('User not signed in!'))
+      );
+      return;
+    }
 
-
-
-  //修改密码
-  Future<bool> _showPasswordVerificationDialog() async {
-    final TextEditingController passwordController = TextEditingController();
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Verify Password'),
-              content: TextField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Current Password',
-                  labelStyle: TextStyle(color: Palette.primaryColor),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Palette.primaryColor),
-                  ),
-                ),
-                obscureText: true,
-              ),
-
-              actions: <Widget>[
-                TextButton(
-                  child: Text('Cancel', style: TextStyle(color: Palette.secondaryColor)),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                ),
-                TextButton(
-                  child: Text('Verify', style: TextStyle(color: Palette.primaryColor)),
-                  onPressed: () async {
-                    final user = _auth.currentUser;
-                    AuthCredential credential = EmailAuthProvider.credential(
-                      email: user?.email ?? "",
-                      password: passwordController.text,
-                    );
-                    try {
-                      await user?.reauthenticateWithCredential(credential);
-                      Navigator.of(context).pop(true);
-                    } catch (e) {
-                      Navigator.of(context).pop(false);
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
-  }
-
-  //也是修改密码
-  Future<void> _showChangePasswordDialog() async {
-    final TextEditingController newPasswordController = TextEditingController();
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Change Password'),
-          content: TextField(
-            controller: newPasswordController,
-            decoration: InputDecoration(
-              labelText: 'New Password',
-              labelStyle: TextStyle(color: Palette.primaryColor),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Palette.primaryColor),
-              ),
-            ),
-            obscureText: true,
-          ),
-
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel',
-                style: TextStyle(color: Palette.secondaryColor),),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Change',
-                style: TextStyle(color: Palette.primaryColor),),
-              onPressed: () async {
-                final user = _auth.currentUser;
-                try {
-                  await user?.updatePassword(newPasswordController.text);
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  // Handle errors here
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+    try {
+      await _auth.sendPasswordResetEmail(email: user.email!);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Password reset email sent.'))
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending password reset email.'))
+      );
+    }
   }
 
   Future<void> _updateAvatarInFirestore(int index) async {
@@ -327,32 +242,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 ),
               ),
 
-
               SizedBox(height: screenHeight * 0.06),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Palette.primaryColor,
-                  // Button's background color
-                  foregroundColor: Colors.white,
-                  // Button's text color
+                  backgroundColor: Palette.primaryColor,  // Button's background color
+                  foregroundColor: Colors.white,  // Button's text color
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5.0), // Rounded edges
+                    borderRadius: BorderRadius.circular(5.0),  // Rounded edges
                   ),
                 ),
                 child: Text(
                   'Change Password',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                onPressed: () async {
-                  final isVerified = await _showPasswordVerificationDialog();
-                  if (isVerified) {
-                    _showChangePasswordDialog();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Incorrect password')),
-                    );
-                  }
-                },
+                onPressed: _resetPassword,  // Call _resetPassword method when the button is pressed
               ),
             ],
           ),

@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import 'dashed_line.dart';
 import 'login_page.dart';
 
-//TODO 将名字之类的写成常量放一个文件
+
 const kPrimaryColor = Color(0xFF3BBBA4);
 const kSecondaryColor = Color(0xffDBDBDB);
 const kDontHaveAccountColor = Color(0xffBABEBD);
@@ -143,7 +142,14 @@ class _RegisterFormState extends State<RegisterForm> {
                     style: TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor),
                   ),
                   SizedBox(height: 16),
-                  Image.asset('assets/images/btn_google.png', width: 30, height: 30),
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Feature under development'))
+                      );
+                    },
+                    child: Image.asset('assets/images/btn_google.png', width: 30, height: 30),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -200,10 +206,19 @@ class _RegisterFormState extends State<RegisterForm> {
           await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
             'name': _preferredNameController.text.trim(),
             'email': _emailController.text.trim(),
-            'dailyLimit': 20,  // 默认的日限额
-            'weeklyLimit': 200, // 默认的周限额
-            'monthlyLimit': 2000, // 默认的月限额
+            'dailyLimit': 200,  // 默认的日限额
+            'weeklyLimit': 1000, // 默认的周限额
+            'monthlyLimit': 3000, // 默认的月限额
             'head': 1, //默认的头像
+          });
+          userCredential.user!.sendEmailVerification().then((value) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Thank you for registering! A email has been sent to your email address.'))
+            );
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error sending verification email: $error'))
+            );
           });
 
           Navigator.pushReplacement(
@@ -211,7 +226,6 @@ class _RegisterFormState extends State<RegisterForm> {
             MaterialPageRoute(builder: (context) => LoginPage()),
           );
         }
-
       } on FirebaseAuthException catch (e) {
         if (e.code == 'email-already-in-use') {
           // 显示错误消息给用户，告知邮箱已被使用
@@ -226,11 +240,7 @@ class _RegisterFormState extends State<RegisterForm> {
       }
     }
   }
-
-
-
 }
-
 
 class CustomTextFormField extends StatelessWidget {
   final TextEditingController controller;

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:spiltbill/main_module/settings_page.dart';
-
+import 'package:SpiltBill/main_module/settings_page.dart';
 import 'main_module/bill_page.dart';
 import 'main_module/group_page.dart';
 import 'main_module/home_page.dart';
 import 'main_module/me_page.dart';
 import 'main_module/choose_group.dart';
 import 'constants/palette.dart';
-
 
 class NavigatePage extends StatefulWidget {
   @override

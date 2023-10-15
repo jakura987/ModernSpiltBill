@@ -70,7 +70,6 @@ class _WelcomePageState extends State<WelcomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Me'),
         ],
       ),
-
     );
   }
 }
