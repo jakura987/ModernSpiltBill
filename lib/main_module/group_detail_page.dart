@@ -11,8 +11,8 @@ class GroupDetailPage extends StatelessWidget {
     bool? confirmDelete = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirm Deletion"),
-        content: Text("Are you sure you want to delete this group?"),
+        title: const Text("Confirm Deletion"),
+        content: const Text("Are you sure you want to delete this group?"),
         actions: [
           TextButton(
             child: Text("Cancel",style: TextStyle(color: Palette.secondaryColor)),

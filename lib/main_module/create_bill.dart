@@ -5,7 +5,6 @@ import 'package:SpiltBill/navigate_page.dart';
 import '../constants/palette.dart';
 import '../bill_created_notification.dart';
 import '../dashed_line.dart';
-import 'home_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:io';
@@ -71,7 +70,6 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
-
   Future<void> _checkDailyLimit() async {
     List<String> exceededUsers = [];
     double currentBillAAPP = _billPrice! / _selectedPeople.length;
@@ -124,12 +122,14 @@ class _CreateBillState extends State<CreateBill> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('OK',style: TextStyle(color: Palette.primaryColor)),
+              child: Text('OK', style: TextStyle(color: Palette.primaryColor)),
               onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
                 Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => NavigatePage()),
-                    (route) => false);
+                  context,
+                  MaterialPageRoute(builder: (context) => NavigatePage()),
+                      (route) => false,
+                );
               },
             ),
           ],

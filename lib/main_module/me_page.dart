@@ -104,7 +104,6 @@ class MePage extends StatelessWidget {
     );
   }
 
-
   List<Widget> _buildFunctionList(BuildContext context) {
     final functions = [
       // 'Notifications',
@@ -142,7 +141,7 @@ class MePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           border:
-          Border(bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)),
+              Border(bottom: BorderSide(color: Colors.grey[400]!, width: 0.5)),
         ),
         padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
         child: Row(
@@ -160,17 +159,41 @@ class MePage extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onTap: () async {
-            await _auth.signOut();
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => LoginPage()));
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Confirm Logout'),
+                content: Text('Are you sure you want to log out?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('Cancel',
+                        style: TextStyle(color: Palette.secondaryColor)),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                  ),
+                  TextButton(
+                    child: Text('Logout',
+                        style: TextStyle(color: Palette.primaryColor)),
+                    onPressed: () async {
+                      await _auth.signOut();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
           },
           child: Text(
             'Log out',
             style: TextStyle(
               color: Palette.primaryColor,
               fontSize: 16.0,
-                fontWeight: FontWeight.bold
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:SpiltBill/dashed_line.dart';
 import 'package:SpiltBill/navigate_page.dart';
 import 'package:SpiltBill/register_page.dart';
 import '../auth_service.dart';
 import 'models/user_model.dart';
+import 'constants/palette.dart';
 
 const kPrimaryColor = Color(0xFF3BBBA4);
 const kSecondaryColor = Color(0xffDBDBDB);
@@ -92,6 +92,7 @@ class _LoginFormState extends State<LoginForm> {
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
+
   Future<String?> _displayPasswordResetDialog(BuildContext context) async {
     TextEditingController _emailController = TextEditingController();
 
@@ -102,15 +103,23 @@ class _LoginFormState extends State<LoginForm> {
           title: Text('Enter your email'),
           content: TextField(
             controller: _emailController,
-            decoration: InputDecoration(hintText: "Email address"),
+            decoration: InputDecoration(
+              hintText: "Email address",
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(color: Palette.primaryColor),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Palette.primaryColor, width: 2.0),
+              ),
+            ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel',style: TextStyle(color: kSecondaryColor)),
+              child: Text('Cancel', style: TextStyle(color: kSecondaryColor)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Submit',style: TextStyle(color: kPrimaryColor)),
+              child: Text('Submit', style: TextStyle(color: kPrimaryColor)),
               onPressed: () => Navigator.of(context).pop(_emailController.text),
             ),
           ],
@@ -126,19 +135,17 @@ class _LoginFormState extends State<LoginForm> {
       try {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Password reset email sent to $email.'))
-        );
+            SnackBar(content: Text('Password reset email sent to $email.')));
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error sending password reset email.'))
-        );
+            SnackBar(content: Text('Error sending password reset email.')));
       }
     }
   }
 
   //跳转register页面
   void _navigateToRegisterPage() {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => RegisterPage()),
     );
