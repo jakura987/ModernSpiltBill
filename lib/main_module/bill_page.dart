@@ -6,7 +6,7 @@ import '../constants/palette.dart';
 import 'bill_detail_page.dart';
 
 class Bill {
-  final String documentId; // <-- Add this
+  final String documentId;
   final String name;
   final double price;
   final DateTime dateTime;
@@ -14,10 +14,12 @@ class Bill {
   final String billDescription;
   final double AAPP;
   final List<PersonStatus> peopleStatus;
+  final String? groupName;
+  final String? billOwner;
   final String imageUrl;
 
   Bill({
-    required this.documentId, // <-- Add this
+    required this.documentId,
     required this.name,
     required this.price,
     required this.dateTime,
@@ -25,6 +27,8 @@ class Bill {
     required this.billDescription,
     required this.AAPP,
     required this.peopleStatus,
+    required this.groupName,
+    required this.billOwner,
     required this.imageUrl,
   });
 
@@ -74,7 +78,6 @@ class _ShowBillState extends State<BillPage>
     super.didChangeDependencies();
   }
 
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CollectionReference bills = FirebaseFirestore.instance.collection(
       'bills');
@@ -119,45 +122,11 @@ class _ShowBillState extends State<BillPage>
         ],
       ),
     );
-
-    // body: StreamBuilder<QuerySnapshot>(
-    //   stream: _firestore.collection('bills').where('peopleName', arrayContains: userModel.userName).snapshots(),
-    //   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-    //     if (snapshot.hasError) {
-    //       return Center(child: Text('Something went wrong'));
-    //     }
-    //
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return Center(child: CircularProgressIndicator());
-    //     }
-    //
-    //     return ListView(
-    //       children: snapshot.data!.docs.map((DocumentSnapshot document) {
-    //         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    //         return BillBox(
-    //           bill: Bill(
-    //             documentId: document.id,  // <-- Add this
-    //             name: data['billName'] ?? "Unknown",
-    //             price: data['billPrice']?.toDouble() ?? 0.0,
-    //             dateTime: (data['billDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    //             numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
-    //             billDescription: data['billDescription'] ?? "Description not provided",
-    //             AAPP: data['AAPP']?.toDouble() ?? 0.0,
-    //             peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(data['peopleStatus']) : [],
-    //           ),
-    //         );
-    //       }).toList(),
-    //     );
-    //   },
-    // ),
   }
 
   Widget _buildBillList(UserModel userModel, bool? isFinished) {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('bills').where(
-        'peopleName',
-        arrayContains: userModel.userName,
-      ).snapshots(),
+      stream: _firestore.collection('bills').snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Something went wrong'));
@@ -177,26 +146,31 @@ class _ShowBillState extends State<BillPage>
           Map<String, dynamic> data = document.data() as Map<String, dynamic>;
           List<PersonStatus> personStatuses = parsePersonStatus(
               data['peopleStatus'] ?? []);
-          if (isFinished == null ||
-              personStatuses.any((status) => status.name ==
-                  userModel.userName && status.status == isFinished)) {
-            return BillBox(
-              bill: Bill(
-                documentId: document.id,
-                // <-- Add this
-                name: data['billName'] ?? "Unknown",
-                price: data['billPrice']?.toDouble() ?? 0.0,
-                dateTime: (data['billDate'] as Timestamp?)?.toDate() ??
-                    DateTime.now(),
-                numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
-                billDescription: data['billDescription'] ??
-                    "Description not provided",
-                AAPP: data['AAPP']?.toDouble() ?? 0.0,
-                peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(
-                    data['peopleStatus']) : [],
-                imageUrl: data['imageUrl'] ?? "",
-              ),
-            );
+          if ((data['peopleName'] as List).contains(userModel.userName) || data['billOwner'] == userModel.userName) {
+            if (isFinished == null ||
+                personStatuses.any((status) => status.name ==
+                    userModel.userName && status.status == isFinished)) {
+              return BillBox(
+                bill: Bill(
+                  documentId: document.id,
+                  name: data['billName'] ?? "Unknown",
+                  price: data['billPrice']?.toDouble() ?? 0.0,
+                  dateTime: (data['billDate'] as Timestamp?)?.toDate() ??
+                      DateTime.now(),
+                  numberOfPeople: data['peopleNumber']?.toInt() ?? 0,
+                  billDescription: data['billDescription'] ??
+                      "Description not provided",
+                  AAPP: data['AAPP']?.toDouble() ?? 0.0,
+                  peopleStatus: data['peopleStatus'] != null ? parsePersonStatus(
+                      data['peopleStatus']) : [],
+                  groupName: data['groupName'] ?? "Unknown",
+                  billOwner: data['billOwner'] ?? "Unknown",
+                  imageUrl: data['imageUrl'] ?? "",
+                ),
+              );
+            } else {
+              return null;
+            }
           } else {
             return null;
           }
@@ -206,6 +180,7 @@ class _ShowBillState extends State<BillPage>
       },
     );
   }
+
 }
 
 

@@ -18,16 +18,22 @@ class BillDetailPage extends StatelessWidget {
         content: Text("Are you sure you want to delete this bill?"),
         actions: [
           TextButton(
-            child: Text("Cancel", style: TextStyle(color: Palette.secondaryColor)),
+            child:
+                Text("Cancel", style: TextStyle(color: Palette.secondaryColor)),
             onPressed: () {
-              Navigator.pop(context, false); // Returns false to the calling method
+              Navigator.pop(
+                  context, false); // Returns false to the calling method
             },
           ),
           TextButton(
             child: Text("Delete", style: TextStyle(color: Colors.red)),
             onPressed: () async {
-              await FirebaseFirestore.instance.collection('bills').doc(bill.documentId).delete();
-              Navigator.pop(context, true); // Returns true to the calling method
+              await FirebaseFirestore.instance
+                  .collection('bills')
+                  .doc(bill.documentId)
+                  .delete();
+              Navigator.pop(
+                  context, true); // Returns true to the calling method
               Navigator.pop(context); // Close the current page after deletion
             },
           ),
@@ -41,7 +47,8 @@ class BillDetailPage extends StatelessWidget {
       context: context,
       builder: (context) => Dialog(
         child: GestureDetector(
-          onTap: () => Navigator.pop(context), // Close the dialog when the image is tapped
+          onTap: () => Navigator.pop(context),
+          // Close the dialog when the image is tapped
           child: Image.network(imageUrl, fit: BoxFit.cover),
         ),
       ),
@@ -53,7 +60,8 @@ class BillDetailPage extends StatelessWidget {
     UserModel userModel = Provider.of<UserModel>(context, listen: false);
 
     // 更新Firestore中的数据
-    DocumentReference billRef = FirebaseFirestore.instance.collection('bills').doc(bill.documentId);
+    DocumentReference billRef =
+        FirebaseFirestore.instance.collection('bills').doc(bill.documentId);
     List<PersonStatus> updatedStatus = [];
 
     for (PersonStatus status in bill.peopleStatus) {
@@ -65,14 +73,12 @@ class BillDetailPage extends StatelessWidget {
     }
 
     await billRef.update({
-      'peopleStatus': updatedStatus.map((status) => {
-        'name': status.name,
-        'status': status.status
-      }).toList()
+      'peopleStatus': updatedStatus
+          .map((status) => {'name': status.name, 'status': status.status})
+          .toList()
     });
     Navigator.of(context).pop();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +114,18 @@ class BillDetailPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Group Name Card
+              Card(
+                margin: EdgeInsets.only(bottom: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: ListTile(
+                  title: Text('Group Name'),
+                  subtitle: Text(bill.groupName ??
+                      'Unknown'), // Use the groupName. If null, display 'Unknown'
+                ),
+              ),
               // Bill Name Card
               Card(
                 margin: EdgeInsets.only(bottom: 15),
@@ -119,15 +137,58 @@ class BillDetailPage extends StatelessWidget {
                   subtitle: Text(bill.name),
                 ),
               ),
+              // Bill Owner
+              Card(
+                margin: EdgeInsets.only(bottom: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Row(
+                    children: [
+                      Text('Bill Owner'),
+                      Spacer(), // This will push the next Text to the end
+                      Text(bill.billOwner ?? 'Unknown',
+                          style: TextStyle(
+                              color: Palette.primaryColor,
+                              fontWeight: FontWeight.bold))
+                    ],
+                  ),
+                ),
+              ),
               // Total Bill Amount Card
               Card(
                 margin: EdgeInsets.only(bottom: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: ListTile(
-                  title: Text('Total Bill Amount'),
-                  subtitle: Text('\$${bill.price.toStringAsFixed(2)}'),
+                child: Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Row(
+                    children: [
+                      Text('Total Bill Amount'),
+                      Spacer(), // This will push the next Text to the end
+                      Text('\$${bill.price.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                ),
+              ),
+              // Average Amount Per Person Card
+              Card(
+                margin: EdgeInsets.only(bottom: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Row(
+                    children: [
+                      Text('Average Amount Per Person'),
+                      Spacer(), // This will push the next Text to the end
+                      Text('\$${bill.AAPP.toStringAsFixed(2)}'),
+                    ],
+                  ),
                 ),
               ),
               // Description Card
@@ -155,15 +216,14 @@ class BillDetailPage extends StatelessWidget {
                       child: Text(
                         'Click to view image',
                         style: TextStyle(
-                          color: Palette.primaryColor,
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.bold
-                        ),
+                            color: Palette.primaryColor,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                 ),
-            ] else ...[
+              ] else ...[
                 Card(
                   margin: EdgeInsets.only(bottom: 15),
                   shape: RoundedRectangleBorder(
@@ -176,17 +236,6 @@ class BillDetailPage extends StatelessWidget {
                 ),
               ],
 
-              // Average Amount Per Person Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ListTile(
-                  title: Text('Average Amount Per Person'),
-                  subtitle: Text('\$${bill.AAPP.toStringAsFixed(2)}'),
-                ),
-              ),
               // People Status Card
               Expanded(
                 child: Card(
@@ -199,11 +248,15 @@ class BillDetailPage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: peopleStatus[index].status ? Colors.green : Colors.red,
-                          child: Text(peopleStatus[index].name[0], style: TextStyle(color: Colors.white)),
+                          backgroundColor: peopleStatus[index].status
+                              ? Colors.green
+                              : Colors.red,
+                          child: Text(peopleStatus[index].name[0],
+                              style: TextStyle(color: Colors.white)),
                         ),
                         title: Text(peopleStatus[index].name),
-                        subtitle: Text(peopleStatus[index].status ? "done" : "undone"),
+                        subtitle: Text(
+                            peopleStatus[index].status ? "done" : "undone"),
                       );
                     },
                   ),

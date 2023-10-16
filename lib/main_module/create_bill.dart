@@ -48,6 +48,7 @@ class _CreateBillState extends State<CreateBill> {
   DateTime? _selectedDate;
   String? _billDescription;
   String _billName = '';
+  String? _billOwner;
   double? _billPrice;
   String _summaryText = '';
   File? _selectedImage;
@@ -167,6 +168,8 @@ class _CreateBillState extends State<CreateBill> {
         'AAPP': _billPrice! / _selectedPeople.length,
         'peopleName': _selectedPeople,
         'peopleStatus': peopleStatusMapList,
+        'groupName': widget.selectedGroups.first,
+        'billOwner': _billOwner,
         if (imageUrl != null) 'imageUrl': imageUrl,
       };
 
@@ -242,9 +245,7 @@ class _CreateBillState extends State<CreateBill> {
   @override
   void initState() {
     super.initState();
-
     print('Received Selected Groups: ${widget.selectedGroups}');
-
     fetchPeopleNames();
   }
 
@@ -332,6 +333,37 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
+  Widget billOwnerSelection() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Bill Owner  *",
+            style: TextStyle(fontSize: 16),
+          ),
+          SizedBox(height: 12),
+          Column(
+            children: allPeopleNames.map((personName) {
+              return RadioListTile<String>(
+                title: Text(personName),
+                value: personName,
+                groupValue: _billOwner,
+                onChanged: (String? value) {
+                  setState(() {
+                    _billOwner = value;
+                  });
+                },
+                activeColor: Palette.primaryColor,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +371,7 @@ class _CreateBillState extends State<CreateBill> {
       backgroundColor: Palette.primaryColor,
       appBar: AppBar(
         backgroundColor: Palette.primaryColor,
-        title: Text("Create your bill"),
+        title: Text("Create bill in ${widget.selectedGroups.first}"),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -369,6 +401,8 @@ class _CreateBillState extends State<CreateBill> {
                     children: [
                       SizedBox(height: 1),
                       billInformationSection(),
+                      SizedBox(height: 1),
+                      billOwnerSelection(),
                       SizedBox(height: 1),
                       sharedToSection(),
                     ],
@@ -406,8 +440,6 @@ class _CreateBillState extends State<CreateBill> {
         children: [
           Center(
           ),
-
-
           // Bill Name
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -479,7 +511,6 @@ class _CreateBillState extends State<CreateBill> {
               ],
             ),
           ),
-
           // Bill Price
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -631,7 +662,11 @@ class _CreateBillState extends State<CreateBill> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_summaryText.isNotEmpty) ...[
-              Text("Bill Summary", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12),
+              Text(
+                "Bill owned by: $_billOwner",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Palette.primaryColor),
+              ),
               Divider(thickness: 1.5),
               SizedBox(height: 12),
               Row(

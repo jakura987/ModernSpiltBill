@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:SplitBill/main_module/profile_edit_page.dart';
 import 'package:SplitBill/main_module/settings_page.dart';
@@ -9,15 +10,77 @@ import '../models/user_avatar_model.dart';
 import '../models/user_model.dart';
 import '../contact_us_page.dart';
 import 'monthly_expenses_review.dart';
+import 'package:sensors/sensors.dart';
+import 'dart:math';
 
-class MePage extends StatelessWidget {
+class MePage extends StatefulWidget {
+  @override
+  _MePageState createState() => _MePageState();
+}
+
+class _MePageState extends State<MePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  StreamSubscription? _accelerometerStreamSubscription;
+  List<double>? _accelerometerValues;
+  double shakeThreshold = 15.0;
+  DateTime? _lastShakeTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _accelerometerStreamSubscription =
+        accelerometerEvents.listen((AccelerometerEvent event) {
+      _accelerometerValues = [event.x, event.y, event.z];
+      _detectShake(event);
+    });
+  }
+
+  _detectShake(AccelerometerEvent event) {
+    double speed = event.x + event.y + event.z;
+    if (speed > shakeThreshold) {
+      final currentTime = DateTime.now();
+      if (_lastShakeTime == null ||
+          currentTime.difference(_lastShakeTime!).inSeconds > 1) {
+        _lastShakeTime = currentTime;
+        _showDiceRoll();
+      }
+    }
+  }
+
+  _showDiceRoll() {
+    int diceNumber = Random().nextInt(6) + 1; // 生成1到6之间的随机数
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('You rolled a'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$diceNumber',
+                style: TextStyle(fontSize: 60, color: Palette.primaryColor)),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK', style: TextStyle(color: Palette.primaryColor)),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _accelerometerStreamSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 获取屏幕的高度
     double screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Account', style: TextStyle(color: Colors.black)),
@@ -29,10 +92,7 @@ class MePage extends StatelessWidget {
         color: Palette.backgroundColor,
         child: Column(
           children: <Widget>[
-            // 添加这个 SizedBox 来控制与 AppBar 的距离
             SizedBox(height: screenHeight * 0.03),
-
-            // 添加外部的 Container，为其设置白色背景
             Container(
               color: Colors.white,
               child: Padding(
@@ -40,17 +100,10 @@ class MePage extends StatelessWidget {
                 child: _buildProfileSection(context),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.03),
-
-            // 功能列表部分
             ..._buildFunctionList(context),
-
             Spacer(),
-
-            // 登出部分
             _buildLogoutSection(context),
-
             SizedBox(height: screenHeight * 0.03),
           ],
         ),
@@ -105,12 +158,7 @@ class MePage extends StatelessWidget {
   }
 
   List<Widget> _buildFunctionList(BuildContext context) {
-    final functions = [
-      // 'Notifications',
-      'Monthly expenses review',
-      'Contact us',
-      'Settings'
-    ];
+    final functions = ['Monthly expenses review', 'Contact us', 'Settings'];
     return functions.map((f) => _buildFunctionItem(context, f)).toList();
   }
 
@@ -135,7 +183,6 @@ class MePage extends StatelessWidget {
             MaterialPageRoute(builder: (context) => MonthlyExpensesPage()),
           );
         }
-        // add more
       },
       child: Container(
         decoration: BoxDecoration(
