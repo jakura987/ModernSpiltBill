@@ -10,8 +10,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-
-
+import 'package:flutter/services.dart';
 
 class CreateBill extends StatefulWidget {
   final List<String> selectedGroups;
@@ -46,6 +45,8 @@ class PersonStatus {
 class _CreateBillState extends State<CreateBill> {
   final TextEditingController _billPriceController = TextEditingController();
   final TextEditingController _billDescriptionController = TextEditingController();
+  final TextEditingController _billNameController = TextEditingController();
+
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<String> _selectedPeople = [];
@@ -60,14 +61,12 @@ class _CreateBillState extends State<CreateBill> {
   String? _billOwner;
   final ImagePicker _picker = ImagePicker();
 
-
   final textRecognizer = TextRecognizer();
 
   //txsb
   bool _showAnalyzeButton = false;
   String? _recognizedText;
   String _detectedText = '';
-
 
   //txsb
   void _removeImage() {
@@ -77,7 +76,6 @@ class _CreateBillState extends State<CreateBill> {
       _recognizedText = null;
     });
   }
-
 
   //txsb
   Future<void> _pickImage() async {
@@ -94,8 +92,6 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
-  //txsb
-
   Future<void> _analyzeImage() async {
     if (_selectedImage != null) {
       final inputImage = InputImage.fromFilePath(_selectedImage!.path);
@@ -110,11 +106,11 @@ class _CreateBillState extends State<CreateBill> {
       }
 
       setState(() {
-        _detectedText = detectedText.isEmpty ? "No word" : detectedText;
+        _detectedText = detectedText.isEmpty ? "None" : detectedText;
 
-        // Always update the bill description
-        _billDescription = _detectedText;
-        _billDescriptionController.text = _billDescription.toString();
+        // Set the first line of the detected text as the bill name
+        _billName = _detectedText.split('\n').first;
+        _billNameController.text = _billName ?? '';
 
         // Use the function to extract the maximum number
         final maxNum = extractMaxNumber(_detectedText);
@@ -123,9 +119,6 @@ class _CreateBillState extends State<CreateBill> {
           _billPriceController.text = _billPrice.toString();
         }
       });
-
-      await textRecognizer.close();
-
 
       await textRecognizer.close();
     }
@@ -141,9 +134,6 @@ class _CreateBillState extends State<CreateBill> {
 
     return maxNum;
   }
-
-
-
 
   Future<void> _checkDailyLimit() async {
     List<String> exceededUsers = [];
@@ -224,7 +214,6 @@ class _CreateBillState extends State<CreateBill> {
         return;
       }
     }
-
     try {
       // Prepare the data
       List<PersonStatus> peopleStatus = _selectedPeople
@@ -243,6 +232,7 @@ class _CreateBillState extends State<CreateBill> {
         'peopleName': _selectedPeople,
         'billOwner': _billOwner,
         'peopleStatus': peopleStatusMapList,
+        'groupName': widget.selectedGroups.first,
         if (imageUrl != null) 'imageUrl': imageUrl,
       };
 
@@ -290,14 +280,7 @@ class _CreateBillState extends State<CreateBill> {
 
       }
     }
-
-    // 这里，您可以使用detectedText，这是从图像中识别出的所有文本。
-    print(detectedText);
   }
-
-
-
-
 
   _splitBill() {
     // Check if all the necessary data is provided
@@ -313,7 +296,7 @@ class _CreateBillState extends State<CreateBill> {
             content: Text('Please provide all the necessary data.'),
             actions: <Widget>[
               TextButton(
-                child: Text('OK'),
+                child: Text('OK', style: TextStyle(color: Palette.primaryColor),),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -433,7 +416,6 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
-
   Widget billOwnerSelection() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -471,7 +453,7 @@ class _CreateBillState extends State<CreateBill> {
       backgroundColor: Palette.primaryColor,
       appBar: AppBar(
         backgroundColor: Palette.primaryColor,
-        title: Text("Create your bill"),
+        title: Text(widget.selectedGroups.first),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -550,6 +532,7 @@ class _CreateBillState extends State<CreateBill> {
               children: [
                 Text("Bill Name  *", style: TextStyle(fontSize: 16)),
                 TextField(
+                  controller: _billNameController,
                   decoration: InputDecoration(
                     hintText: "Enter bill name",
                     focusedBorder: UnderlineInputBorder(
@@ -623,7 +606,10 @@ class _CreateBillState extends State<CreateBill> {
                 Text("Bill Price  *", style: TextStyle(fontSize: 16)),
                 TextField(
                   controller: _billPriceController,
-                  keyboardType: TextInputType.number, // Only allow numbers
+                  keyboardType: TextInputType.numberWithOptions(decimal: true), // Allow decimal input
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')), // Only allow digits and .
+                  ],
                   decoration: InputDecoration(
                     hintText: "Enter bill price",
                     focusedBorder: UnderlineInputBorder(
@@ -670,24 +656,38 @@ class _CreateBillState extends State<CreateBill> {
             child: Column(
               children: [
                 if (_selectedImage != null) ...[
-                  Image.file(
-                    _selectedImage!,
-                    width: 150,
-                    height: 150,
-                    fit: BoxFit.cover,
+                  Stack(
+                    children: [
+                      Image.file(
+                        _selectedImage!,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.black),
+                          onPressed: _removeImage,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 10,
+                        left: 100,
+                        right: 100,
+                        child: Visibility(
+                          visible: _showAnalyzeButton,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              primary: Palette.primaryColor, // 指定按钮背景颜色
+                            ),
+                            onPressed: _analyzeImage,
+                            child: Text("Extract text"),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(Icons.delete_forever, color: Colors.grey),
-                    onPressed: _removeImage,
-                  ),
-                  if (_showAnalyzeButton)
-                    ElevatedButton(
-                      onPressed: _analyzeImage,
-                      child: Text("Analyze Image"),
-                    ),
                   if (_recognizedText != null)
                     Text(_recognizedText!),
-                  Text(_detectedText)
                 ] else ...[
                   ElevatedButton.icon(
                     icon: Icon(Icons.camera_alt),
@@ -701,6 +701,7 @@ class _CreateBillState extends State<CreateBill> {
               ],
             ),
           ),
+
         ],
       ),
     );
@@ -718,7 +719,6 @@ class _CreateBillState extends State<CreateBill> {
           ),
           SizedBox(height: 12),
           Container(
-            height: 160.0,
             child: SingleChildScrollView(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -784,14 +784,10 @@ class _CreateBillState extends State<CreateBill> {
               ),
               Divider(thickness: 1.5),
               SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Bill Name: $_billName", style: TextStyle(fontSize: 16)),
-                  Text("Bill Price: \$${_billPrice?.toStringAsFixed(2) ?? '0'}",
-                      style: TextStyle(fontSize: 16)),
-                ],
-              ),
+              Text("Bill Name: $_billName", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
+              Text("Bill Price: \$${_billPrice?.toStringAsFixed(2) ?? '0'}",
+                  style: TextStyle(fontSize: 16)),
               SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -854,10 +850,9 @@ class _CreateBillState extends State<CreateBill> {
 
   @override
   void dispose() {
+    _billNameController.dispose();
     _billDescriptionController.dispose();
     _billPriceController.dispose();
     super.dispose();
   }
-
-
 }

@@ -98,6 +98,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 TextField(
                   controller: _groupNameController,
                   decoration: InputDecoration(
+                    hintText: "Enter group name",
                     border: UnderlineInputBorder(
                       borderSide: BorderSide(color: Palette.primaryColor),
                     ),
@@ -146,6 +147,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     TextField(
                       controller: _searchUserController,
                       decoration: InputDecoration(
+                        hintText: "Enter email",
                         border: UnderlineInputBorder(
                           borderSide: BorderSide(color: Palette.primaryColor),
                         ),

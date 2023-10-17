@@ -131,9 +131,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   controller.text = monthlyLimit?.toString() ?? '';
                 }
               }
-              // 无需其他操作，因为当开关关闭时TextFormField应始终显示数据库中的值，并且由`enabled: isEnabled`确保其不可修改。
             });
           },
+          activeColor: Palette.primaryColor, // 设置开关的活跃颜色
         ),
         Text(label, style: TextStyle(fontSize: 16)),
         SizedBox(width: 10),

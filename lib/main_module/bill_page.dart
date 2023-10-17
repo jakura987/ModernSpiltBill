@@ -63,8 +63,6 @@ class _ShowBillState extends State<BillPage>
     _tabController?.dispose();
     super.dispose();
   }
-
-
   bool _isInit = true;
 
   @override
@@ -175,12 +173,10 @@ class _ShowBillState extends State<BillPage>
             return null;
           }
         }).where((billBox) => billBox != null).toList().cast<BillBox>();
-
         return ListView(children: bills);
       },
     );
   }
-
 }
 
 

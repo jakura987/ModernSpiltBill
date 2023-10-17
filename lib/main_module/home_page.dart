@@ -8,9 +8,6 @@ import 'bill_page.dart';
 import '../constants/palette.dart';
 
 class HomePage extends StatefulWidget {
-  final VoidCallback goToBillPage;
-  HomePage({required this.goToBillPage});
-
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -217,8 +214,11 @@ class _HomePageState extends State<HomePage> {
                           fontWeight: FontWeight.bold)),
                   InkWell(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => BillPage()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => BillPage(), // 传递账单数据到详情页面
+                      ));
                     },
+
                     child: Text("See all",
                         style: TextStyle(
                             color: Palette.primaryColor,

@@ -16,7 +16,7 @@ class _NavigatePageState extends State<NavigatePage> {
   int _currentIndex = 0; // 当前选中的页面索引
 
   List<Widget> get _pages => [
-    HomePage(goToBillPage: goToBillPage),
+    HomePage(),
     GroupPage(),
     ChooseGroup(),
     BillPage(),

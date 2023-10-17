@@ -108,161 +108,163 @@ class BillDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(15.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Group Name Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ListTile(
-                  title: Text('Group Name'),
-                  subtitle: Text(bill.groupName ??
-                      'Unknown'), // Use the groupName. If null, display 'Unknown'
-                ),
-              ),
-              // Bill Name Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ListTile(
-                  title: Text('Bill Name'),
-                  subtitle: Text(bill.name),
-                ),
-              ),
-              // Bill Owner
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(15.0),
-                  child: Row(
-                    children: [
-                      Text('Bill Owner'),
-                      Spacer(), // This will push the next Text to the end
-                      Text(bill.billOwner ?? 'Unknown',
-                          style: TextStyle(
-                              color: Palette.primaryColor,
-                              fontWeight: FontWeight.bold))
-                    ],
-                  ),
-                ),
-              ),
-              // Total Bill Amount Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(15.0),
-                  child: Row(
-                    children: [
-                      Text('Total Bill Amount'),
-                      Spacer(), // This will push the next Text to the end
-                      Text('\$${bill.price.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                ),
-              ),
-              // Average Amount Per Person Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(15.0),
-                  child: Row(
-                    children: [
-                      Text('Average Amount Per Person'),
-                      Spacer(), // This will push the next Text to the end
-                      Text('\$${bill.AAPP.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                ),
-              ),
-              // Description Card
-              Card(
-                margin: EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ListTile(
-                  title: Text('Description'),
-                  subtitle: Text(bill.billDescription),
-                ),
-              ),
-              // Check if the bill has an image
-              if (bill.imageUrl != "" && bill.imageUrl!.isNotEmpty) ...[
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Group Name Card
                 Card(
                   margin: EdgeInsets.only(bottom: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: ListTile(
-                    title: Text('Bill Image'),
-                    subtitle: GestureDetector(
-                      onTap: () => _showImage(context, bill.imageUrl!),
-                      child: Text(
-                        'Click to view image',
-                        style: TextStyle(
-                            color: Palette.primaryColor,
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold),
-                      ),
+                    title: Text('Bill from group'),
+                    subtitle: Text(bill.groupName ??
+                        'Unknown'), // Use the groupName. If null, display 'Unknown'
+                  ),
+                ),
+                // Bill Name Card
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListTile(
+                    title: Text('Bill Name'),
+                    subtitle: Text(bill.name),
+                  ),
+                ),
+                // Bill Owner
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(15.0),
+                    child: Row(
+                      children: [
+                        Text('Bill Owner'),
+                        Spacer(), // This will push the next Text to the end
+                        Text(bill.billOwner ?? 'Unknown',
+                            style: TextStyle(
+                                color: Palette.primaryColor,
+                                fontWeight: FontWeight.bold))
+                      ],
                     ),
                   ),
                 ),
-              ] else ...[
+                // Total Bill Amount Card
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(15.0),
+                    child: Row(
+                      children: [
+                        Text('Total Bill Amount'),
+                        Spacer(), // This will push the next Text to the end
+                        Text('\$${bill.price.toStringAsFixed(2)}'),
+                      ],
+                    ),
+                  ),
+                ),
+                // Average Amount Per Person Card
+                Card(
+                  margin: EdgeInsets.only(bottom: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(15.0),
+                    child: Row(
+                      children: [
+                        Text('Average Amount Per Person'),
+                        Spacer(), // This will push the next Text to the end
+                        Text('\$${bill.AAPP.toStringAsFixed(2)}'),
+                      ],
+                    ),
+                  ),
+                ),
+                // Description Card
                 Card(
                   margin: EdgeInsets.only(bottom: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: ListTile(
-                    title: Text('Bill Image'),
-                    subtitle: Text('No image uploaded'),
+                    title: Text('Description'),
+                    subtitle: Text(bill.billDescription),
                   ),
                 ),
-              ],
-
-              // People Status Card
-              Expanded(
-                child: Card(
-                  margin: EdgeInsets.only(bottom: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: ListView.builder(
-                    itemCount: peopleStatus.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: peopleStatus[index].status
-                              ? Colors.green
-                              : Colors.red,
-                          child: Text(peopleStatus[index].name[0],
-                              style: TextStyle(color: Colors.white)),
+                // Check if the bill has an image
+                if (bill.imageUrl != "" && bill.imageUrl!.isNotEmpty) ...[
+                  Card(
+                    margin: EdgeInsets.only(bottom: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: ListTile(
+                      title: Text('Bill Image'),
+                      subtitle: GestureDetector(
+                        onTap: () => _showImage(context, bill.imageUrl!),
+                        child: Text(
+                          'Click to view image',
+                          style: TextStyle(
+                              color: Palette.primaryColor,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold),
                         ),
-                        title: Text(peopleStatus[index].name),
-                        subtitle: Text(
-                            peopleStatus[index].status ? "done" : "undone"),
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ] else ...[
+                  Card(
+                    margin: EdgeInsets.only(bottom: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: ListTile(
+                      title: Text('Bill Image'),
+                      subtitle: Text('No image uploaded'),
+                    ),
+                  ),
+                ],
+
+                // People Status Card
+                  Card(
+                    margin: EdgeInsets.only(bottom: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: peopleStatus.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: peopleStatus[index].status
+                                ? Colors.green
+                                : Colors.red,
+                            child: Text(peopleStatus[index].name[0],
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                          title: Text(peopleStatus[index].name),
+                          subtitle: Text(
+                              peopleStatus[index].status ? "done" : "undone"),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
