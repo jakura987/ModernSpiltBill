@@ -113,7 +113,7 @@ class _CreateBillState extends State<CreateBill> {
         _billNameController.text = _billName ?? '';
 
         // Use the function to extract the maximum number
-        final maxNum = extractMaxNumber(_detectedText);
+        final maxNum = extractBillAmount(_detectedText);
         if (maxNum != null) {
           _billPrice = maxNum;
           _billPriceController.text = _billPrice.toString();
@@ -124,13 +124,23 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
-  double? extractMaxNumber(String text) {
-    // 使用正则表达式匹配所有的数字，包括小数点
-    final regex = RegExp(r'(\d+(\.\d+)?)');
-    final matches = regex.allMatches(text);
+  double? extractBillAmount(String text) {
+    final regex = RegExp(r'\$?(\d+(\.\d{2})?)'); // Match formats like $23.45 or 23.45
+    final keywords = ["Total", "Amount", "Pay", "Charge"];
 
-    // 将所有匹配项转换为 double 类型，并找到其中的最大值
-    var maxNum = matches.map((match) => double.parse(match.group(0)!)).fold<double?>(null, (prev, element) => (prev == null || element > prev) ? element : prev);
+    for (var keyword in keywords) {
+      if (text.contains(keyword)) {
+        final matches = regex.allMatches(text);
+        // Assuming the amount is close to the keyword, we take the last match
+        if (matches.isNotEmpty) {
+          return double.parse(matches.last.group(1)!); // Use group(1) to exclude the "$" sign
+        }
+      }
+    }
+
+    // Fallback to the original method if no keyword is found
+    final matches = regex.allMatches(text);
+    var maxNum = matches.map((match) => double.parse(match.group(1)!)).fold<double?>(null, (prev, element) => (prev == null || element > prev) ? element : prev);
 
     return maxNum;
   }
