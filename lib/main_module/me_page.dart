@@ -18,7 +18,7 @@ class MePage extends StatefulWidget {
   _MePageState createState() => _MePageState();
 }
 
-class _MePageState extends State<MePage> with WidgetsBindingObserver {
+class _MePageState extends State<MePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription? _accelerometerStreamSubscription;
   List<double>? _accelerometerValues;
@@ -28,29 +28,11 @@ class _MePageState extends State<MePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _startListening();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      _startListening();
-    } else if (state == AppLifecycleState.paused) {
-      _stopListening();
-    }
-  }
-
-  void _startListening() {
-    _accelerometerStreamSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+    _accelerometerStreamSubscription =
+        accelerometerEvents.listen((AccelerometerEvent event) {
       _accelerometerValues = [event.x, event.y, event.z];
       _detectShake(event);
     });
-  }
-
-  void _stopListening() {
-    _accelerometerStreamSubscription?.cancel();
   }
 
   _detectShake(AccelerometerEvent event) {
@@ -92,8 +74,7 @@ class _MePageState extends State<MePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _stopListening();
+    _accelerometerStreamSubscription?.cancel();
     super.dispose();
   }
 
