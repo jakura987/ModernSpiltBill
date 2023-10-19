@@ -24,6 +24,7 @@ class _MePageState extends State<MePage> {
   List<double>? _accelerometerValues;
   double shakeThreshold = 20.0;
   DateTime? _lastShakeTime;
+  DateTime? _muteEndTime;
 
   @override
   void initState() {
@@ -37,10 +38,16 @@ class _MePageState extends State<MePage> {
 
   _detectShake(AccelerometerEvent event) {
     double speed = event.x + event.y + event.z;
+    final currentTime = DateTime.now();
+
+    if (_muteEndTime != null && currentTime.isBefore(_muteEndTime!)) {
+      return;
+    }
+
     if (speed > shakeThreshold) {
       final currentTime = DateTime.now();
       if (_lastShakeTime == null ||
-          currentTime.difference(_lastShakeTime!).inSeconds > 1) {
+          currentTime.difference(_lastShakeTime!).inSeconds > 10) {
         _lastShakeTime = currentTime;
         _showDiceRoll();
       }
@@ -48,7 +55,7 @@ class _MePageState extends State<MePage> {
   }
 
   _showDiceRoll() {
-    int diceNumber = Random().nextInt(6) + 1; // 生成1到6之间的随机数
+    int diceNumber = Random().nextInt(6) + 1;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -58,19 +65,31 @@ class _MePageState extends State<MePage> {
           children: [
             Text('$diceNumber',
                 style: TextStyle(fontSize: 60, color: Palette.primaryColor)),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  child: Text('Mute in 5 mins', style: TextStyle(color: Palette.secondaryColor)),
+                  onPressed: () {
+                    _muteEndTime = DateTime.now().add(Duration(minutes: 5));
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                ),
+                TextButton(
+                  child: Text('OK', style: TextStyle(color: Palette.primaryColor)),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                ),
+              ],
+            ),
           ],
         ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('OK', style: TextStyle(color: Palette.primaryColor)),
-            onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-            },
-          ),
-        ],
       ),
     );
   }
+
 
   @override
   void dispose() {
