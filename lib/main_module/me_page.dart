@@ -22,7 +22,7 @@ class _MePageState extends State<MePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription? _accelerometerStreamSubscription;
   List<double>? _accelerometerValues;
-  double shakeThreshold = 15.0;
+  double shakeThreshold = 20.0;
   DateTime? _lastShakeTime;
 
   @override
