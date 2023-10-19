@@ -46,6 +46,7 @@ class _CreateBillState extends State<CreateBill> {
   final TextEditingController _billPriceController = TextEditingController();
   final TextEditingController _billDescriptionController = TextEditingController();
   final TextEditingController _billNameController = TextEditingController();
+  bool isSubmitting = false;
 
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -62,13 +63,10 @@ class _CreateBillState extends State<CreateBill> {
   final ImagePicker _picker = ImagePicker();
 
   final textRecognizer = TextRecognizer();
-
-  //txsb
   bool _showAnalyzeButton = false;
   String? _recognizedText;
   String _detectedText = '';
 
-  //txsb
   void _removeImage() {
     setState(() {
       _selectedImage = null;
@@ -77,7 +75,6 @@ class _CreateBillState extends State<CreateBill> {
     });
   }
 
-  //txsb
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery); // Choose from gallery. For camera, use `ImageSource.camera`
 
@@ -213,9 +210,17 @@ class _CreateBillState extends State<CreateBill> {
     }
   }
 
+
   Future<void> _submitBill() async {
     await _checkDailyLimit();
     String? imageUrl;
+
+    if (isSubmitting) return;  // If already submitting, return immediately
+
+    setState(() {
+      isSubmitting = true;
+    });
+
     if (_selectedImage != null) {
       imageUrl = await _uploadImageToFirebase(_selectedImage!);
       if (imageUrl == null) {
@@ -271,6 +276,10 @@ class _CreateBillState extends State<CreateBill> {
       SnackBar(content: Text('Error submitting bill. Please try again.'));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
+
+    setState(() {
+      isSubmitting = false;
+    });
   }
 
   //图像识别功能
@@ -526,13 +535,68 @@ class _CreateBillState extends State<CreateBill> {
 
   Widget billInformationSection() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
           ),
+          // select image
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: Column(
+              children: [
+                if (_selectedImage != null) ...[
+                  Stack(
+                    children: [
+                      Image.file(
+                        _selectedImage!,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.black),
+                          onPressed: _removeImage,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 10,
+                        left: 100,
+                        right: 100,
+                        child: Visibility(
+                          visible: _showAnalyzeButton,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Palette.primaryColor, // 指定按钮背景颜色
+                            ),
+                            onPressed: _analyzeImage,
+                            child: Text("Extract text"),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_recognizedText != null)
+                    Text(_recognizedText!),
+                ] else ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.file_upload),
+                      onPressed: _pickImage,
+                      label: Text("Upload Image"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Palette.primaryColor,
+                      ),
+                    ),
+                  ),
 
+                  Text("Upload a billing image can automatically fill the billing information.",style: TextStyle(color: Palette.secondaryColor),),
+                ]
+              ],
+            ),
+          ),
 
           // Bill Name
           Padding(
@@ -658,60 +722,6 @@ class _CreateBillState extends State<CreateBill> {
               ],
             ),
           ),
-
-          // select image
-          //在此处添加图片识别功能
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              children: [
-                if (_selectedImage != null) ...[
-                  Stack(
-                    children: [
-                      Image.file(
-                        _selectedImage!,
-                        fit: BoxFit.cover,
-                      ),
-                      Positioned(
-                        right: 0,
-                        child: IconButton(
-                          icon: Icon(Icons.close, color: Colors.black),
-                          onPressed: _removeImage,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 10,
-                        left: 100,
-                        right: 100,
-                        child: Visibility(
-                          visible: _showAnalyzeButton,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              primary: Palette.primaryColor, // 指定按钮背景颜色
-                            ),
-                            onPressed: _analyzeImage,
-                            child: Text("Extract text"),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_recognizedText != null)
-                    Text(_recognizedText!),
-                ] else ...[
-                  ElevatedButton.icon(
-                    icon: Icon(Icons.camera_alt),
-                    onPressed: _pickImage,
-                    label: Text("Choose Image"),
-                    style: ElevatedButton.styleFrom(
-                      primary: Palette.primaryColor,
-                    ),
-                  ),
-                ]
-              ],
-            ),
-          ),
-
         ],
       ),
     );
@@ -831,10 +841,26 @@ class _CreateBillState extends State<CreateBill> {
               ),
               SizedBox(height: 20.0),
               Center(
-                child: ElevatedButton(
+                child: isSubmitting
+                    ? Container(
+                  width: 170, // Approximate width of the button
+                  height: 40, // Approximate height of the button
+                  decoration: BoxDecoration(
+                    color: Palette.primaryColor,
+                    borderRadius: BorderRadius.circular(8), // Adjust as per your button's border radius
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20.0,  // specify your desired width
+                      height: 20.0, // specify your desired height
+                      child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                    ),
+                  ),
+                )
+                    : ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Palette.primaryColor, // Set the button color
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), // Increase the button size
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10), // Increase the button size
                   ),
                   onPressed: _submitBill,
                   child: Text(_summaryText.isEmpty ? "Next" : "Submit bill", style: TextStyle(fontSize: 18)),
@@ -847,7 +873,7 @@ class _CreateBillState extends State<CreateBill> {
                     primary: Palette.primaryColor, // Set the button color
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), // Increase the button size
                   ),
-                  onPressed: _splitBill,
+                  onPressed: isSubmitting ? null : _splitBill,
                   child: Text("Next", style: TextStyle(fontSize: 18)),
                 ),
               ),
@@ -857,6 +883,8 @@ class _CreateBillState extends State<CreateBill> {
       ),
     );
   }
+
+
 
   @override
   void dispose() {

@@ -19,79 +19,82 @@ class MonthlySpendingChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
-    List<DateTime> lastThreeMonths = [
-      DateTime(now.year, now.month),
-      DateTime(now.year, now.month - 1),
-      DateTime(now.year, now.month - 2),
+    List<String> lastThreeMonthsLabels = [
+      DateFormat('MMM').format(now.subtract(Duration(days: 60))),
+      DateFormat('MMM').format(now.subtract(Duration(days: 30))),
+      DateFormat('MMM').format(now),
     ];
 
-    // Adjust for year boundaries
-    for (int i = 0; i < lastThreeMonths.length; i++) {
-      if (lastThreeMonths[i].month <= 0) {
-        lastThreeMonths[i] = DateTime(
-            lastThreeMonths[i].year - 1, lastThreeMonths[i].month + 12);
-      }
-    }
+    var sortedValues = lastThreeMonthsLabels.map((label) => monthlySpends[label] ?? 0).toList();
 
-    Map<String, double> filteredMonthlySpends = {};
-    for (DateTime date in lastThreeMonths) {
-      String key = '${date.month}-${date.year}';
-      if (monthlySpends.containsKey(key)) {
-        filteredMonthlySpends[key] = monthlySpends[key]!;
-      }
-    }
+    double maxY = (sortedValues.isNotEmpty)
+        ? sortedValues.reduce((curr, next) => curr > next ? curr : next)
+        : 1.0;
+    maxY += maxY * 0.1;  // Setting maxY to 10% more than the maximum value
 
-    // Sort the keys and values
-    var sortedKeys = monthlySpends.keys.toList()
-      ..sort((a, b) => DateFormat('yyyy-MM')
-          .parse(a)
-          .compareTo(DateFormat('yyyy-MM').parse(b)));
-
-    var sortedValues = sortedKeys.map((key) => monthlySpends[key]!).toList();
-
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: SideTitles(
-              showTitles: true,
-              getTitles: (value) {
-                int index = value.toInt();
-                return index < sortedKeys.length ? sortedKeys[index] : '';
-              },
+    return Column(
+      children: [
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              gridData: FlGridData(show: false),
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: SideTitles(
+                  showTitles: true,
+                  getTitles: (value) {
+                    switch (value.toInt()) {
+                      case 0:
+                        return lastThreeMonthsLabels[0];
+                      case 1:
+                        return lastThreeMonthsLabels[1];
+                      case 2:
+                        return lastThreeMonthsLabels[2];
+                      default:
+                        return '';
+                    }
+                  },
+                ),
+                leftTitles: SideTitles(showTitles: false),
+                topTitles: SideTitles(showTitles: false), // 确保此属性为false
+              ),
+              borderData: FlBorderData(
+                show: true,
+                border: Border.all(color: Palette.primaryColor, width: 1),
+              ),
+              maxY: maxY,
+              barGroups: sortedValues.asMap().entries.map((entry) {
+                return BarChartGroupData(
+                  x: entry.key,
+                  barRods: [
+                    BarChartRodData(
+                      borderRadius: BorderRadius.zero,
+                      y: entry.value,
+                      width: 15,
+                      colors: [Palette.primaryColor],
+                    ),
+                  ],
+                );
+              }).toList(),
             ),
-            leftTitles: SideTitles(showTitles: true),
           ),
-          borderData: FlBorderData(
-            show: true,
-            border: Border.all(color: Palette.primaryColor, width: 1),
-          ),
-          minX: 0,
-          maxX: (sortedKeys.length - 1).toDouble(),
-          minY: 0,
-          maxY: sortedValues.reduce((curr, next) => curr > next ? curr : next),
-          lineBarsData: [
-            LineChartBarData(
-              spots: sortedValues
-                  .asMap()
-                  .map((index, value) =>
-                      MapEntry(index, FlSpot(index.toDouble(), value)))
-                  .values
-                  .toList(),
-              isCurved: true,
-              barWidth: 4,
-              isStrokeCapRound: true,
-              belowBarData: BarAreaData(show: false),
-            ),
-          ],
         ),
-      ),
+        ...lastThreeMonthsLabels.map((label) {
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+            margin: EdgeInsets.symmetric(vertical: 4.0),
+            child: ListTile(
+              title: Text(label),
+              trailing: Text('${monthlySpends[label]?.toStringAsFixed(2) ?? '0'}'),
+            ),
+          );
+        }).toList(),
+      ],
     );
   }
 }
+
 
 class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
   bool _isInit = true;
@@ -100,7 +103,6 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
   void didChangeDependencies() {
     if (_isInit) {
       _isInit = false;
-      // 调用 UserModel 的 fetchUser 方法
       final userModel = Provider.of<UserModel>(context, listen: false);
       userModel.fetchUser(context);
     }
@@ -108,7 +110,13 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
   }
 
   Future<Map<String, double>> _fetchMonthlySpends(String userName) async {
-    Map<String, double> monthlySpends = {};
+    // 为最后三个月初始化地图并设置默认值
+    DateTime now = DateTime.now();
+    Map<String, double> monthlySpends = {
+      DateFormat('MMM').format(now.subtract(Duration(days: 60))): 0,
+      DateFormat('MMM').format(now.subtract(Duration(days: 30))): 0,
+      DateFormat('MMM').format(now): 0,
+    };
 
     QuerySnapshot billsSnapshot = await FirebaseFirestore.instance
         .collection('bills')
@@ -118,14 +126,11 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
     for (var doc in billsSnapshot.docs) {
       var billData = doc.data() as Map<String, dynamic>;
       DateTime billDate = (billData['billDate'] as Timestamp).toDate();
-      String monthKey = "${billDate.year}-${billDate.month}";
+      String monthKey = DateFormat('MMM').format(billDate);
 
-      if (!monthlySpends.containsKey(monthKey)) {
-        monthlySpends[monthKey] = 0.0;
-      }
-      monthlySpends[monthKey] = (monthlySpends[monthKey] ?? 0.0) +
-          (billData['AAPP']?.toDouble() ?? 0.0);
+      monthlySpends[monthKey] = (monthlySpends[monthKey] ?? 0.0) + (billData['AAPP']?.toDouble() ?? 0.0);
     }
+
     return monthlySpends;
   }
 
@@ -141,7 +146,7 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
         elevation: 1.0,
       ),
       body: Padding(
-        padding: EdgeInsets.only(top: 80.0, bottom: 20.0), // Add top padding for chart labels
+        padding: EdgeInsets.all(50.0),
         child: FutureBuilder<Map<String, double>>(
           future: _fetchMonthlySpends(userModel.userName),
           builder: (context, snapshot) {
@@ -151,56 +156,12 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
               return Center(child: Text('An error occurred!'));
             } else {
               if (snapshot.data!.isEmpty) {
-                return Center(child: Text('no bills data can be found'));
+                return Center(child: Text('No bills data can be found'));
               }
 
-              final sortedKeys = snapshot.data!.keys.toList()
-                ..sort((a, b) => a.compareTo(b));
-              final sortedValues = sortedKeys.map((key) => snapshot.data![key]!).toList();
-
-              return BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: sortedValues.reduce((curr, next) => curr > next ? curr : next),
-                  barGroups: sortedValues.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    double value = entry.value;
-                    return BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          y: value,
-                          width: 15, // Reduce the width of the bars
-                          colors: [Palette.primaryColor],
-                        ),
-                      ],
-                      showingTooltipIndicators: [0],
-                    );
-                  }).toList(),
-                  titlesData: FlTitlesData(
-                    leftTitles: SideTitles(
-                      showTitles: true,
-                      getTitles: (value) {
-                        return sortedValues.contains(value) ? value.toStringAsFixed(0) : '';
-                      },
-                    ),
-                    bottomTitles: SideTitles(
-                      showTitles: true,
-                      getTitles: (value) {
-                        int index = value.toInt();
-                        if (index < sortedKeys.length) {
-                          DateTime dateTime = DateFormat("yyyy-MM").parse(sortedKeys[index]);
-                          return DateFormat("MMM yyyy").format(dateTime);
-                        }
-                        return '';
-                      },
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                ),
+              return SizedBox(
+                height: MediaQuery.of(context).size.height / 2,
+                child: MonthlySpendingChart(monthlySpends: snapshot.data!),
               );
             }
           },
@@ -209,3 +170,4 @@ class _MonthlyExpensesPageState extends State<MonthlyExpensesPage> {
     );
   }
 }
+
